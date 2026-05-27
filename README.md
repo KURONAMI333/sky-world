@@ -1,33 +1,42 @@
-# Sky World (SW)
+# Sky World
 
-> Convert overworld into Aether II-style continental floating islands with vanilla ores/structures/mobs remapped via Isekai API.
+> Overworld becomes a sea of Aether II-style continental floating islands.
+> Below the islands is the void. Vanilla ores, structures, and mobs are remapped onto the islands via Isekai API.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Modrinth](https://img.shields.io/badge/Modrinth-sky-world-00AF5C)](https://modrinth.com/mod/sky-world)
-[![CurseForge](https://img.shields.io/badge/CurseForge-sky-world-F16436)](https://www.curseforge.com/minecraft/mc-mods/sky-world)
+[![NeoForge 1.21.1](https://img.shields.io/badge/NeoForge-1.21.1-orange.svg)](https://neoforged.net)
+[![Depends on Isekai API](https://img.shields.io/badge/Depends-Isekai%20API-9333ea)](https://github.com/KURONAMI333/isekai-api)
 
 ---
 
-## Supported Loaders / Versions
+## Concept
 
-| Minecraft | NeoForge | Forge | Fabric |
-|---|:---:|:---:|:---:|
-| 1.21.1 | TBD | TBD | TBD |
-| 1.20.1 |  —  | TBD | TBD |
+Every chunk of the overworld is rewritten as massive, thick floating islands separated by open void. Villages, ravines, strongholds, and ore veins all relocate into the island volume — you mine *through* the island instead of *down* to bedrock.
 
-(TBD: 実装後に更新)
+Pairs naturally with bridge mods (YUNG's Bridges), airship mods (Create: Aeronautics), and view-distance mods (Distant Horizons).
 
----
+## How it works
 
-## Why?
+Sky World is built on **[Isekai API](https://github.com/KURONAMI333/isekai-api)**, a neutral universal worldgen library.
 
-(目的、解決する問題を 2-3 行で)
+The library provides composable density primitives (`mask_y_range`, `distance`, `step`, `mask`, ...) and rule-adaptation primitives (`SpatialPredicate`, `RemapStrategy`, ...). Sky World composes these primitives to express the floating-island worldshape — same primitives any third-party modder can use to express *their* worldshape.
 
-## Installation
+The library has no idea Sky World exists; Sky World is just one application of the primitives.
 
-1. ローダー導入
-2. 依存 MOD 導入（あれば）
-3. `sky-world-X.Y.Z-{loader}-{mc}.jar` を `mods/` に配置
+## Status
+
+**v0.1**: skeleton. `@Mod` entry + Isekai API facade smoke test. The actual `WorldshapeDescriptor` declaration and density function composition will land once Isekai API v0.2 ships the functional rule scanner and biome modifier generator.
+
+## Dependencies
+
+- NeoForge 1.21.1
+- [Isekai API](https://github.com/KURONAMI333/isekai-api) (required)
+
+## Building from source
+
+```bash
+./gradlew build
+```
 
 ## License
 
