@@ -9,6 +9,8 @@ version="${mod_version}"
 displayName="${mod_name}"
 authors="${mod_authors}"
 displayURL="https://github.com/KURONAMI333/sky-world"
+logoFile="sky_world.png"
+logoBlur=false
 description='''
 ${mod_description}
 '''
@@ -30,6 +32,6 @@ ${mod_description}
 [[dependencies.${mod_id}]]
     modId="isekai_api"
     type="required"
-    versionRange="[0.1.0,)"
+    versionRange="[1.0.0,)"
     ordering="BEFORE"
     side="BOTH"
