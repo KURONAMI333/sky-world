@@ -64,8 +64,11 @@ repositories {
 }
 
 dependencies {
-    // Isekai API consumer dependency (compile-time only; runtime wiring lands with runClient setup)
+    // Isekai API consumer dependency. compileOnly for the API surface;
+    // localRuntime drops the jar into the dev runtime so runClient/runServer load it
+    // as a regular NeoForge mod (it has its own neoforge.mods.toml).
     compileOnly files("../mod-029-isekai-api/build/libs/isekai_api-${isekai_api_version}.jar")
+    localRuntime files("../mod-029-isekai-api/build/libs/isekai_api-${isekai_api_version}.jar")
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
