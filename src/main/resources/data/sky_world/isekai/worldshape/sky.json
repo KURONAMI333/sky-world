@@ -6,53 +6,53 @@
     "distribution": "uniform"
   },
   "surface_anchor": {
-    "type": "isekai:fixed_y",
+    "type": "isekai_api:fixed_y",
     "y": 140
   },
   "ore_strategy": {
-    "type": "isekai:linear"
+    "type": "isekai_api:linear"
   },
   "structure_strategy": {
-    "type": "isekai:identity"
+    "type": "isekai_api:identity"
   },
   "mob_spawn_strategy": {
-    "type": "isekai:identity"
+    "type": "isekai_api:identity"
   },
   "default_structure_predicate": {
-    "type": "isekai:and",
+    "type": "isekai_api:and",
     "all": [
       {
-        "type": "isekai:y_in_range",
+        "type": "isekai_api:y_in_range",
         "min": 50,
         "max": 230
       },
       {
-        "type": "isekai:solid_floor",
+        "type": "isekai_api:solid_floor",
         "min_clearance": 2
       }
     ]
   },
   "structure_predicates": {
     "minecraft:monument": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:shipwreck_beached": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:shipwreck": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:buried_treasure": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:ocean_ruin_cold": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:ocean_ruin_warm": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     },
     "minecraft:ancient_city": {
-      "type": "isekai:never"
+      "type": "isekai_api:never"
     }
   },
   "applies_to": [
