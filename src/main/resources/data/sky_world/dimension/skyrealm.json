@@ -8,15 +8,15 @@
       "fallback": "minecraft:plains",
       "rules": [
         {
-          "zone": { "type": "isekai:within_distance", "radius": 600 },
+          "zone": { "type": "isekai_api:within_distance", "radius": 600 },
           "biome": "sky_world:ethereal_grove"
         },
         {
-          "zone": { "type": "isekai:within_distance", "radius": 1400 },
+          "zone": { "type": "isekai_api:within_distance", "radius": 1400 },
           "biome": "minecraft:forest"
         },
         {
-          "zone": { "type": "isekai:beyond_distance", "radius": 2600 },
+          "zone": { "type": "isekai_api:beyond_distance", "radius": 2600 },
           "biome": "minecraft:snowy_taiga"
         }
       ]
