@@ -4,6 +4,29 @@ All notable changes to Sky World follow this file. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/); versions before 1.0.0 were
 development-only and not released.
 
+## [1.1.0] — 2026-08-05
+
+Requires Isekai API 2.x. No world-generation change: terrain, biomes, ores,
+structures and surface blocks are identical to 1.0.0.
+
+### Changed
+- Both `noise_settings` documents (`minecraft:overworld` and `sky_world:skyrealm`)
+  state the surface as Isekai's `isekai_api:vanilla_overworld_surface` delegate
+  instead of an expanded copy of the vanilla surface-rule tree — 2427 → 197 and
+  2419 → 184 lines. The delegate reconstructs the same vanilla overworld surface
+  at runtime, so the emitted blocks are unchanged.
+- Router axes that the engine never samples with `aquifers_enabled: false` and
+  `ore_veins_enabled: false` (`barrier`, `fluid_level_floodedness`,
+  `fluid_level_spread`, `lava`, `vein_toggle`, `vein_ridged`, `vein_gap`) are
+  stated as `minecraft:zero`. Every axis that *is* sampled — `continents`,
+  `erosion`, `depth`, `ridges`, `temperature`, `vegetation`,
+  `initial_density_without_jaggedness` — stays byte-identical to vanilla, and
+  `final_density` keeps the Y=50..200 `band_density` island shape.
+- Worldshape and biome-source `"type"` ids use the canonical `isekai_api:`
+  prefix (the bare `isekai:` prefix is deprecated in Isekai API 2.x).
+- The build resolves Isekai API from its raw-URL maven repo, so this repo builds
+  without a sibling checkout.
+
 ## [1.0.0] — 2026-05-28
 
 First public release. Datapack-only Aether-style floating-island overworld

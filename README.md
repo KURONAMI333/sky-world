@@ -19,7 +19,7 @@ Pairs naturally with bridge mods (YUNG's Bridges), airship mods (Create: Aeronau
 
 Sky World ships **only datapack JSON** — no custom blocks, no custom mobs, no Mixins of its own. The whole world transformation is expressed in three files:
 
-1. **`data/minecraft/worldgen/noise_settings/overworld.json`** — overlay that wraps vanilla's `final_density` in Isekai's `mask_y_range`, forcing solid terrain into the Y=120..220 band and leaving void elsewhere.
+1. **`data/minecraft/worldgen/noise_settings/overworld.json`** — replaces the overworld's noise settings. Terrain shape is Isekai's `band_density`, which confines solid terrain to a Y=50..200 band (30-block gradient at each edge) and leaves void elsewhere; the surface layer is Isekai's one-line `vanilla_overworld_surface` delegate, so the grass/sand/badlands/snow rules stay exactly vanilla without copying the 30 KB rule tree.
 2. **`data/sky_world/neoforge/biome_modifier/apply_sky.json`** — a NeoForge biome modifier of type `isekai_api:apply_worldshape` that:
    - Remaps every ore feature's Y range into the island band (via Isekai's `Linear` `RemapStrategy`)
    - Excludes all overworld carvers — no caves inside the islands
@@ -38,7 +38,7 @@ That's the whole mod. Same Isekai primitives any third-party modder gets — Sky
 ## Dependencies
 
 - NeoForge 1.21.1
-- [Isekai API 1.0.0+](https://github.com/KURONAMI333/isekai-api) (required, loaded automatically)
+- [Isekai API 2.x](https://github.com/KURONAMI333/isekai-api) (required, loaded automatically)
 
 ## Building from source
 
@@ -46,7 +46,7 @@ That's the whole mod. Same Isekai primitives any third-party modder gets — Sky
 ./gradlew build
 ```
 
-Produces `build/libs/sky_world-1.0.0.jar`.
+Produces `build/libs/sky_world-1.1.0.jar`.
 
 ## Compatibility
 
