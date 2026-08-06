@@ -4,6 +4,40 @@ All notable changes to Sky World follow this file. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/); versions before 1.0.0 were
 development-only and not released.
 
+## [2.0.0] — unreleased
+
+Requires Isekai API 2.1.0. **World-generation change: existing worlds keep their
+old terrain — start a new world.**
+
+### Added
+- Three altitude tiers instead of one uniform band. Low tier Y=8..100 (broad,
+  sparse), main tier Y=90..202 (dense, where you live), high tier Y=198..256
+  (small, rare), combined with `minecraft:max`.
+- Island undersides taper. Each tier's noise is multiplied by a
+  `minecraft:y_clamped_gradient` over the lower part of its band, so density
+  falls off quadratically downward instead of mirroring the top.
+- Dimension-wide visibility range — `client_atmosphere.fog_near_distance` 64,
+  `fog_far_distance` 256, so distant islands read as haze.
+
+### Changed
+- `applies_to` is the `#minecraft:is_overworld` tag instead of 36 hand-written
+  biome ids. The 17 biomes the list had missed (9 oceans, 3 badlands, river and
+  frozen_river, lush_caves, dripstone_caves, deep_dark) now get the worldshape,
+  so ore remap and structure predicates no longer have holes.
+- `ore_strategy` is `isekai_api:column_local` (`scale: proportional`) instead of
+  `linear`. Ore depth resolves against each column's own surface and underside,
+  which is what a world of islands at different altitudes needs.
+- `playable_range` Y=8..256 and `default_structure_predicate`'s `y_in_range`
+  28..246, to bracket the new tiers.
+
+### Removed
+- The `sky_world:skyrealm` dimension, its `dimension_type`, its `noise_settings`
+  and the `ethereal_grove` biome. It had no portal and no way in short of
+  `/execute in`, and its terrain was a copy of the overworld's.
+- `atmosphere.sky_color` / `fog_color`. The sky is vanilla's per-biome colour
+  again; the green sky is gone.
+- `content_overrides.block_overrides` (cherry_grove quartz/calcite).
+
 ## [1.1.0] — 2026-08-05
 
 Requires Isekai API 2.x. No world-generation change: terrain, biomes, ores,
