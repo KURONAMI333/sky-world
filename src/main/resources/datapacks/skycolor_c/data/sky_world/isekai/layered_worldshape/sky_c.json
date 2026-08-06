@@ -1,0 +1,464 @@
+{
+  "dimension": "minecraft:overworld",
+  "layers": [
+    {
+      "y_range": {
+        "min_y": -64,
+        "max_y": 96,
+        "distribution": "uniform"
+      },
+      "descriptor": {
+        "dimension": "minecraft:overworld",
+        "playable_range": {
+          "min_y": 8,
+          "max_y": 256,
+          "distribution": "uniform"
+        },
+        "surface_anchor": {
+          "type": "isekai_api:fixed_y",
+          "y": 140
+        },
+        "ore_strategy": {
+          "type": "isekai_api:column_local",
+          "top": {
+            "type": "isekai_api:world_surface"
+          },
+          "bottom": {
+            "type": "isekai_api:world_floor"
+          },
+          "scale": "proportional"
+        },
+        "structure_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "mob_spawn_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "default_structure_predicate": {
+          "type": "isekai_api:and",
+          "all": [
+            {
+              "type": "isekai_api:y_in_range",
+              "min": 28,
+              "max": 246
+            },
+            {
+              "type": "isekai_api:solid_floor",
+              "min_clearance": 2
+            }
+          ]
+        },
+        "structure_predicates": {
+          "minecraft:monument": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck_beached": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:buried_treasure": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_cold": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_warm": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ancient_city": {
+            "type": "isekai_api:never"
+          }
+        },
+        "applies_to": {
+          "keys": [
+            "minecraft:cold_ocean",
+            "minecraft:deep_cold_ocean",
+            "minecraft:deep_frozen_ocean",
+            "minecraft:frozen_ocean",
+            "minecraft:frozen_peaks",
+            "minecraft:frozen_river",
+            "minecraft:grove",
+            "minecraft:ice_spikes",
+            "minecraft:jagged_peaks",
+            "minecraft:old_growth_pine_taiga",
+            "minecraft:old_growth_spruce_taiga",
+            "minecraft:snowy_beach",
+            "minecraft:snowy_plains",
+            "minecraft:snowy_slopes",
+            "minecraft:snowy_taiga",
+            "minecraft:stony_peaks",
+            "minecraft:taiga"
+          ]
+        },
+        "exclusions": {
+          "carvers": [
+            "minecraft:cave",
+            "minecraft:cave_extra_underground",
+            "minecraft:canyon",
+            "minecraft:nether_cave"
+          ],
+          "structures": [],
+          "features": [
+            "minecraft:spring_water",
+            "minecraft:spring_lava",
+            "minecraft:spring_lava_frozen",
+            "minecraft:spring_open",
+            "minecraft:spring_closed",
+            "minecraft:spring_closed_double",
+            "minecraft:spring_delta"
+          ],
+          "mob_spawns": []
+        },
+        "client_atmosphere": {
+          "fog_near_distance": 64.0,
+          "fog_far_distance": 256.0
+        },
+        "priority": 100,
+        "atmosphere": {
+          "sky_color": 12178664
+        }
+      },
+      "transition": {
+        "type": "isekai_api:hard"
+      }
+    },
+    {
+      "y_range": {
+        "min_y": 96,
+        "max_y": 176,
+        "distribution": "uniform"
+      },
+      "descriptor": {
+        "dimension": "minecraft:overworld",
+        "playable_range": {
+          "min_y": 8,
+          "max_y": 256,
+          "distribution": "uniform"
+        },
+        "surface_anchor": {
+          "type": "isekai_api:fixed_y",
+          "y": 140
+        },
+        "ore_strategy": {
+          "type": "isekai_api:column_local",
+          "top": {
+            "type": "isekai_api:world_surface"
+          },
+          "bottom": {
+            "type": "isekai_api:world_floor"
+          },
+          "scale": "proportional"
+        },
+        "structure_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "mob_spawn_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "default_structure_predicate": {
+          "type": "isekai_api:and",
+          "all": [
+            {
+              "type": "isekai_api:y_in_range",
+              "min": 28,
+              "max": 246
+            },
+            {
+              "type": "isekai_api:solid_floor",
+              "min_clearance": 2
+            }
+          ]
+        },
+        "structure_predicates": {
+          "minecraft:monument": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck_beached": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:buried_treasure": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_cold": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_warm": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ancient_city": {
+            "type": "isekai_api:never"
+          }
+        },
+        "applies_to": {
+          "keys": [
+            "minecraft:badlands",
+            "minecraft:desert",
+            "minecraft:eroded_badlands",
+            "minecraft:savanna",
+            "minecraft:savanna_plateau",
+            "minecraft:windswept_savanna",
+            "minecraft:wooded_badlands"
+          ]
+        },
+        "exclusions": {
+          "carvers": [
+            "minecraft:cave",
+            "minecraft:cave_extra_underground",
+            "minecraft:canyon",
+            "minecraft:nether_cave"
+          ],
+          "structures": [],
+          "features": [
+            "minecraft:spring_water",
+            "minecraft:spring_lava",
+            "minecraft:spring_lava_frozen",
+            "minecraft:spring_open",
+            "minecraft:spring_closed",
+            "minecraft:spring_closed_double",
+            "minecraft:spring_delta"
+          ],
+          "mob_spawns": []
+        },
+        "client_atmosphere": {
+          "fog_near_distance": 64.0,
+          "fog_far_distance": 256.0
+        },
+        "priority": 100,
+        "atmosphere": {
+          "sky_color": 12372443
+        }
+      },
+      "transition": {
+        "type": "isekai_api:hard"
+      }
+    },
+    {
+      "y_range": {
+        "min_y": 176,
+        "max_y": 240,
+        "distribution": "uniform"
+      },
+      "descriptor": {
+        "dimension": "minecraft:overworld",
+        "playable_range": {
+          "min_y": 8,
+          "max_y": 256,
+          "distribution": "uniform"
+        },
+        "surface_anchor": {
+          "type": "isekai_api:fixed_y",
+          "y": 140
+        },
+        "ore_strategy": {
+          "type": "isekai_api:column_local",
+          "top": {
+            "type": "isekai_api:world_surface"
+          },
+          "bottom": {
+            "type": "isekai_api:world_floor"
+          },
+          "scale": "proportional"
+        },
+        "structure_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "mob_spawn_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "default_structure_predicate": {
+          "type": "isekai_api:and",
+          "all": [
+            {
+              "type": "isekai_api:y_in_range",
+              "min": 28,
+              "max": 246
+            },
+            {
+              "type": "isekai_api:solid_floor",
+              "min_clearance": 2
+            }
+          ]
+        },
+        "structure_predicates": {
+          "minecraft:monument": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck_beached": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:buried_treasure": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_cold": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_warm": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ancient_city": {
+            "type": "isekai_api:never"
+          }
+        },
+        "applies_to": {
+          "keys": [
+            "minecraft:bamboo_jungle",
+            "minecraft:deep_lukewarm_ocean",
+            "minecraft:jungle",
+            "minecraft:lukewarm_ocean",
+            "minecraft:lush_caves",
+            "minecraft:mangrove_swamp",
+            "minecraft:mushroom_fields",
+            "minecraft:sparse_jungle",
+            "minecraft:swamp",
+            "minecraft:warm_ocean"
+          ]
+        },
+        "exclusions": {
+          "carvers": [
+            "minecraft:cave",
+            "minecraft:cave_extra_underground",
+            "minecraft:canyon",
+            "minecraft:nether_cave"
+          ],
+          "structures": [],
+          "features": [
+            "minecraft:spring_water",
+            "minecraft:spring_lava",
+            "minecraft:spring_lava_frozen",
+            "minecraft:spring_open",
+            "minecraft:spring_closed",
+            "minecraft:spring_closed_double",
+            "minecraft:spring_delta"
+          ],
+          "mob_spawns": []
+        },
+        "client_atmosphere": {
+          "fog_near_distance": 64.0,
+          "fog_far_distance": 256.0
+        },
+        "priority": 100,
+        "atmosphere": {
+          "sky_color": 7979992
+        }
+      },
+      "transition": {
+        "type": "isekai_api:hard"
+      }
+    },
+    {
+      "y_range": {
+        "min_y": 240,
+        "max_y": 320,
+        "distribution": "uniform"
+      },
+      "descriptor": {
+        "dimension": "minecraft:overworld",
+        "playable_range": {
+          "min_y": 8,
+          "max_y": 256,
+          "distribution": "uniform"
+        },
+        "surface_anchor": {
+          "type": "isekai_api:fixed_y",
+          "y": 140
+        },
+        "ore_strategy": {
+          "type": "isekai_api:column_local",
+          "top": {
+            "type": "isekai_api:world_surface"
+          },
+          "bottom": {
+            "type": "isekai_api:world_floor"
+          },
+          "scale": "proportional"
+        },
+        "structure_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "mob_spawn_strategy": {
+          "type": "isekai_api:identity"
+        },
+        "default_structure_predicate": {
+          "type": "isekai_api:and",
+          "all": [
+            {
+              "type": "isekai_api:y_in_range",
+              "min": 28,
+              "max": 246
+            },
+            {
+              "type": "isekai_api:solid_floor",
+              "min_clearance": 2
+            }
+          ]
+        },
+        "structure_predicates": {
+          "minecraft:monument": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck_beached": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:shipwreck": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:buried_treasure": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_cold": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ocean_ruin_warm": {
+            "type": "isekai_api:never"
+          },
+          "minecraft:ancient_city": {
+            "type": "isekai_api:never"
+          }
+        },
+        "applies_to": {
+          "tags": [
+            "#minecraft:is_overworld"
+          ]
+        },
+        "exclusions": {
+          "carvers": [
+            "minecraft:cave",
+            "minecraft:cave_extra_underground",
+            "minecraft:canyon",
+            "minecraft:nether_cave"
+          ],
+          "structures": [],
+          "features": [
+            "minecraft:spring_water",
+            "minecraft:spring_lava",
+            "minecraft:spring_lava_frozen",
+            "minecraft:spring_open",
+            "minecraft:spring_closed",
+            "minecraft:spring_closed_double",
+            "minecraft:spring_delta"
+          ],
+          "mob_spawns": []
+        },
+        "client_atmosphere": {
+          "fog_near_distance": 64.0,
+          "fog_far_distance": 256.0
+        },
+        "priority": 100,
+        "atmosphere": {
+          "sky_color": 9221861
+        }
+      },
+      "transition": {
+        "type": "isekai_api:hard"
+      }
+    }
+  ]
+}
