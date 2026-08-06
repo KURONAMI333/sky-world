@@ -1,8 +1,8 @@
 {
   "dimension": "minecraft:overworld",
   "playable_range": {
-    "min_y": 40,
-    "max_y": 240,
+    "min_y": 8,
+    "max_y": 256,
     "distribution": "uniform"
   },
   "surface_anchor": {
@@ -10,7 +10,14 @@
     "y": 140
   },
   "ore_strategy": {
-    "type": "isekai_api:linear"
+    "type": "isekai_api:column_local",
+    "top": {
+      "type": "isekai_api:world_surface"
+    },
+    "bottom": {
+      "type": "isekai_api:world_floor"
+    },
+    "scale": "proportional"
   },
   "structure_strategy": {
     "type": "isekai_api:identity"
@@ -23,8 +30,8 @@
     "all": [
       {
         "type": "isekai_api:y_in_range",
-        "min": 50,
-        "max": 230
+        "min": 28,
+        "max": 246
       },
       {
         "type": "isekai_api:solid_floor",
@@ -55,44 +62,11 @@
       "type": "isekai_api:never"
     }
   },
-  "applies_to": [
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:snowy_plains",
-    "minecraft:ice_spikes",
-    "minecraft:desert",
-    "minecraft:savanna",
-    "minecraft:savanna_plateau",
-    "minecraft:windswept_savanna",
-    "minecraft:forest",
-    "minecraft:flower_forest",
-    "minecraft:birch_forest",
-    "minecraft:old_growth_birch_forest",
-    "minecraft:dark_forest",
-    "minecraft:taiga",
-    "minecraft:snowy_taiga",
-    "minecraft:old_growth_pine_taiga",
-    "minecraft:old_growth_spruce_taiga",
-    "minecraft:jungle",
-    "minecraft:sparse_jungle",
-    "minecraft:bamboo_jungle",
-    "minecraft:swamp",
-    "minecraft:mangrove_swamp",
-    "minecraft:meadow",
-    "minecraft:cherry_grove",
-    "minecraft:grove",
-    "minecraft:snowy_slopes",
-    "minecraft:frozen_peaks",
-    "minecraft:jagged_peaks",
-    "minecraft:stony_peaks",
-    "minecraft:windswept_hills",
-    "minecraft:windswept_gravelly_hills",
-    "minecraft:windswept_forest",
-    "minecraft:beach",
-    "minecraft:snowy_beach",
-    "minecraft:stony_shore",
-    "minecraft:mushroom_fields"
-  ],
+  "applies_to": {
+    "tags": [
+      "#minecraft:is_overworld"
+    ]
+  },
   "exclusions": {
     "carvers": [
       "minecraft:cave",
@@ -112,19 +86,9 @@
     ],
     "mob_spawns": []
   },
-  "atmosphere": {
-    "sky_color": 9419271,
-    "fog_color": 13415129
-  },
-  "content_overrides": {
-    "block_overrides": {
-      "surface_top": {
-        "minecraft:cherry_grove": { "Name": "minecraft:quartz_block" }
-      },
-      "default_block": {
-        "minecraft:cherry_grove": { "Name": "minecraft:calcite" }
-      }
-    }
+  "client_atmosphere": {
+    "fog_near_distance": 64.0,
+    "fog_far_distance": 256.0
   },
   "priority": 100
 }
