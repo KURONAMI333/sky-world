@@ -3,7 +3,7 @@
   "placement": [
     {
       "type": "minecraft:rarity_filter",
-      "chance": 8
+      "chance": 48
     },
     {
       "type": "minecraft:in_square"
@@ -18,6 +18,19 @@
       "max_slope": 0.25,
       "sample_radius": 8,
       "heightmap": "WORLD_SURFACE_WG"
+    },
+    {
+      "type": "minecraft:count",
+      "count": {
+        "type": "minecraft:uniform",
+        "min_inclusive": 2,
+        "max_inclusive": 3
+      }
+    },
+    {
+      "type": "minecraft:random_offset",
+      "xz_spread": 3,
+      "y_spread": 0
     }
   ]
 }

@@ -40,6 +40,16 @@ HEIGHTMAPS = {
     "MOTION_BLOCKING_NO_LEAVES",
 }
 
+# Measured from vanilla 1.21.1: minecraft:lake_lava_surface is the only feature
+# that puts fluid on the open surface, and it fires in one chunk out of this many.
+VANILLA_SURFACE_LAKE_RARITY = 200
+# Files that have already passed a rarity_filter, so a later count is multiplicity
+# within one rare site rather than a per-chunk density driver.
+seen_rarity: set[str] = set()
+# Which shape each placed feature's configured feature turned out to be. The
+# surface anchor differs between them, so the placement check needs to know.
+FORM: dict[str, str] = {}
+
 errors: list[str] = []
 notes: list[str] = []
 
@@ -121,7 +131,9 @@ def check_disk(rel: str) -> int:
     if obj is None:
         return -1
     if obj.get("type") == "isekai_api:pool":
+        FORM[rel] = "pool"
         return check_pool(rel, obj)
+    FORM[rel] = "disk"
     if obj.get("type") != "minecraft:disk":
         err(f"{rel}: type must be minecraft:disk or isekai_api:pool")
         return -1
@@ -187,16 +199,33 @@ def check_placed(rel: str, feature: str, disk_radius: int) -> None:
         t = m.get("type")
         if t == "minecraft:count":
             c = m.get("count")
-            if not (isinstance(c, int) and 0 <= c <= 256):
+            lo_hi = (
+                (c, c)
+                if isinstance(c, int)
+                else (
+                    (c.get("min_inclusive"), c.get("max_inclusive"))
+                    if isinstance(c, dict)
+                    else (None, None)
+                )
+            )
+            if not all(isinstance(v, int) and 0 <= v <= 256 for v in lo_hi):
                 err(f"{rel}: count {c!r} outside the codec range 0..256")
         elif t == "minecraft:random_offset":
             for k in ("xz_spread", "y_spread"):
                 v = m.get(k)
                 if not (isinstance(v, int) and -16 <= v <= 16):
                     err(f"{rel}: random_offset.{k} {v!r} outside -16..16")
-            if m.get("y_spread") != -1:
+            # The two shapes anchor differently and the offset has to match, or the
+            # feature works one block off. minecraft:disk paints the block it is given,
+            # so it needs -1 to reach the surface block itself. isekai_api:pool takes
+            # the air cell above the surface as its origin and digs down from there
+            # (PoolFeature.place: "origin = air cell above the top solid block"), so
+            # shifting it down would sink the whole basin.
+            want = 0 if FORM.get(rel) == "pool" else -1
+            if m.get("y_spread") != want:
                 err(
-                    f"{rel}: y_spread must be -1 to land on the surface block, not the air above"
+                    f"{rel}: y_spread must be {want} for a "
+                    f"{FORM.get(rel, 'disk')} feature"
                 )
         elif t == "minecraft:heightmap":
             if m.get("heightmap") not in HEIGHTMAPS:
@@ -244,18 +273,36 @@ def check_placed(rel: str, feature: str, disk_radius: int) -> None:
                 err(f"{rel}: rarity_filter takes only 'chance'")
             if not (isinstance(c, int) and c >= 1):
                 err(f"{rel}: rarity_filter chance must be a positive int")
-            elif c < 4:
+            elif c < VANILLA_SURFACE_LAKE_RARITY // 8:
+                # Anchor, not taste: vanilla's own visible surface water
+                # (minecraft:lake_lava_surface) is one chunk in 200. Islands cover a
+                # fraction of the chunks here so some multiple of that is defensible,
+                # but an order of magnitude denser is a rash, not a landscape.
                 err(
-                    f"{rel}: rarity_filter chance {c} puts a pond in one chunk of {c} — "
-                    "too dense to read as terrain"
+                    f"{rel}: rarity_filter chance {c} — vanilla puts visible surface "
+                    f"water at 1/{VANILLA_SURFACE_LAKE_RARITY}; {c} is "
+                    f"{VANILLA_SURFACE_LAKE_RARITY // max(c, 1)}x denser than that"
                 )
             else:
                 notes.append(f"{rel}: one attempt per {c} chunks")
+            seen_rarity.add(rel)
         elif t == "minecraft:count":
-            err(
-                f"{rel}: minecraft:count fires in every chunk — use "
-                "minecraft:rarity_filter so most chunks get nothing"
-            )
+            # count multiplies whatever reached it. Ahead of a rarity_filter it is the
+            # density driver and fires every chunk; behind one it is how a single
+            # already-rare site gets several overlapping discs, which is what stops
+            # the pool from reading as a mathematical circle.
+            if rel not in seen_rarity:
+                err(
+                    f"{rel}: minecraft:count fires in every chunk — put a "
+                    "minecraft:rarity_filter ahead of it"
+                )
+            else:
+                cnt = m.get("count")
+                hi = cnt.get("max_inclusive") if isinstance(cnt, dict) else cnt
+                if isinstance(hi, int) and hi > 4:
+                    err(f"{rel}: count max {hi} per site is a cluster, not a pond")
+                else:
+                    notes.append(f"{rel}: {cnt} overlapping discs per site")
         elif t in ("minecraft:in_square", "minecraft:biome"):
             if set(m) != {"type"}:
                 err(f"{rel}: {t} takes no fields")
@@ -394,8 +441,12 @@ def check_cloud_above_bands() -> None:
 
 
 def main() -> int:
+    cf = "data/sky_world/worldgen/configured_feature/{}.json"
+    pf = "data/sky_world/worldgen/placed_feature/{}.json"
     rw = check_disk("data/sky_world/worldgen/configured_feature/pond_water.json")
     rl = check_disk("data/sky_world/worldgen/configured_feature/pond_lava.json")
+    for n in ("pond_water", "pond_lava"):
+        FORM[pf.format(n)] = FORM.get(cf.format(n), "disk")
     check_placed(
         "data/sky_world/worldgen/placed_feature/pond_water.json",
         "sky_world:pond_water",
