@@ -43,6 +43,10 @@ HEIGHTMAPS = {
 # Measured from vanilla 1.21.1: minecraft:lake_lava_surface is the only feature
 # that puts fluid on the open surface, and it fires in one chunk out of this many.
 VANILLA_SURFACE_LAKE_RARITY = 200
+# This world has no ocean, so surface pools are the only water there is. That earns a
+# multiple of vanilla's density, but a bounded one — kura called 1/8 "too many" and
+# 1/48 "maybe too few", so the usable band sits around 1/24.
+NO_OCEAN_DENSITY_FACTOR = 16
 # Files that have already passed a rarity_filter, so a later count is multiplicity
 # within one rare site rather than a per-chunk density driver.
 seen_rarity: set[str] = set()
@@ -273,15 +277,15 @@ def check_placed(rel: str, feature: str, disk_radius: int) -> None:
                 err(f"{rel}: rarity_filter takes only 'chance'")
             if not (isinstance(c, int) and c >= 1):
                 err(f"{rel}: rarity_filter chance must be a positive int")
-            elif c < VANILLA_SURFACE_LAKE_RARITY // 8:
+            elif c < VANILLA_SURFACE_LAKE_RARITY // NO_OCEAN_DENSITY_FACTOR:
                 # Anchor, not taste: vanilla's own visible surface water
                 # (minecraft:lake_lava_surface) is one chunk in 200. Islands cover a
                 # fraction of the chunks here so some multiple of that is defensible,
                 # but an order of magnitude denser is a rash, not a landscape.
                 err(
                     f"{rel}: rarity_filter chance {c} — vanilla puts visible surface "
-                    f"water at 1/{VANILLA_SURFACE_LAKE_RARITY}; {c} is "
-                    f"{VANILLA_SURFACE_LAKE_RARITY // max(c, 1)}x denser than that"
+                    f"water at 1/{VANILLA_SURFACE_LAKE_RARITY}; even allowing "
+                    f"{NO_OCEAN_DENSITY_FACTOR}x for having no ocean, {c} is too dense"
                 )
             else:
                 notes.append(f"{rel}: one attempt per {c} chunks")
