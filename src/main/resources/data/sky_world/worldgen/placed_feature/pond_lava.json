@@ -16,21 +16,8 @@
       "type": "isekai_api:slope_filter",
       "min_slope": 0.0,
       "max_slope": 0.2,
-      "sample_radius": 6,
+      "sample_radius": 7,
       "heightmap": "WORLD_SURFACE_WG"
-    },
-    {
-      "type": "minecraft:count",
-      "count": {
-        "type": "minecraft:uniform",
-        "min_inclusive": 1,
-        "max_inclusive": 2
-      }
-    },
-    {
-      "type": "minecraft:random_offset",
-      "xz_spread": 2,
-      "y_spread": 0
     }
   ]
 }

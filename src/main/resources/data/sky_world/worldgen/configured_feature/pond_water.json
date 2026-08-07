@@ -15,9 +15,10 @@
     },
     "xz_radius": {
       "type": "minecraft:uniform",
-      "min_inclusive": 2,
-      "max_inclusive": 5
+      "min_inclusive": 4,
+      "max_inclusive": 7
     },
-    "depth": 2
+    "depth": 2,
+    "irregularity": 0.4
   }
 }

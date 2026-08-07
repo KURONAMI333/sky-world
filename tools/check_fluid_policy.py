@@ -84,7 +84,7 @@ def check_pool(rel: str, obj: dict) -> int:
     at depth 0 there is no lip left to hold anything.
     """
     cfg = obj.get("config", {})
-    expected = {"fluid", "rim_block", "xz_radius", "depth"}
+    expected = {"fluid", "rim_block", "xz_radius", "depth", "irregularity"}
     if set(cfg) != expected:
         err(f"{rel}: config fields {sorted(cfg)} != {sorted(expected)}")
     fluid = cfg.get("fluid", {})
@@ -119,6 +119,16 @@ def check_pool(rel: str, obj: dict) -> int:
             f"{rel}: xz_radius is a single value ({lo}) — vary it so the pools do "
             f"not all come out the same size"
         )
+    # A pool at irregularity 0 is a compass circle, which is what kura rejected. The
+    # feature bites inward only, so the mean radius shrinks by about half the value —
+    # xz_radius has to be raised to compensate or the pools come out smaller too.
+    irr = cfg.get("irregularity")
+    if not isinstance(irr, (int, float)):
+        err(f"{rel}: irregularity must be a number")
+    elif irr < 0.2:
+        err(f"{rel}: irregularity {irr} still reads as a circle — 0.3..0.5 is the band")
+    elif irr > 0.6:
+        err(f"{rel}: irregularity {irr} looks gnawed rather than natural")
     return hi
 
 
