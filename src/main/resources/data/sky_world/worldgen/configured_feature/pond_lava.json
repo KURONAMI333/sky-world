@@ -6,18 +6,16 @@
         "type": "minecraft:simple_state_provider",
         "state": {
           "Name": "minecraft:lava",
-          "Properties": { "level": "0" }
+          "Properties": {
+            "level": "0"
+          }
         }
       },
       "rules": []
     },
     "target": {
       "type": "minecraft:matching_blocks",
-      "blocks": [
-        "minecraft:stone",
-        "minecraft:gravel",
-        "minecraft:red_sand"
-      ]
+      "blocks": "#sky_world:lava_pond_ground"
     },
     "radius": {
       "type": "minecraft:uniform",

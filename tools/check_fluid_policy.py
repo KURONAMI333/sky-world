@@ -91,6 +91,18 @@ def check_disk(rel: str) -> int:
     tgt = cfg.get("target", {})
     if tgt.get("type") != "minecraft:matching_blocks":
         err(f"{rel}: target should be minecraft:matching_blocks")
+    blocks = tgt.get("blocks")
+    # A vanilla HolderSet is either one "#tag" string or a list of plain ids — never a
+    # mixed list. Tags keep the target broad enough to actually be reachable (measured
+    # against a generated world: 65% of solid columns for water, 12% for lava).
+    if not isinstance(blocks, str) or not blocks.startswith("#"):
+        err(f"{rel}: target.blocks should be a single '#tag' string, got {blocks!r}")
+    elif blocks.startswith("#sky_world:"):
+        name = blocks.split(":", 1)[1]
+        if not (RES / f"data/sky_world/tags/block/{name}.json").exists():
+            err(f"{rel}: target.blocks references {blocks} but no such tag file exists "
+                f"(expected data/sky_world/tags/block/{name}.json — note 1.21 uses the "
+                "singular 'tags/block' directory)")
     return hi
 
 
