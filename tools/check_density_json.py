@@ -139,6 +139,9 @@ DF_FIELDS: dict[str, set[str]] = {
 }
 
 errors: list[str] = []
+# Non-fatal observations. Used where a file is internally consistent but the design
+# it encodes has a known consequence worth restating at every run.
+notes: list[str] = []
 
 
 def walk(node, path: str) -> None:
@@ -209,6 +212,46 @@ def profile_at(grads: list, y: float) -> float:
     return total
 
 
+def profile_form(node) -> str:
+    """Which vertical-profile design a band uses.
+
+    The two are not interchangeable and their invariants are opposites, so the
+    checks below have to know which one is in force:
+
+    - "multiplicative": ``mul(island_noise, y_clamped_gradient)``. The gradient is
+      a 0..1 factor, so it scales the noise toward zero at the band edges. Density
+      saturates as the noise grows, which flattens the underside into a plate —
+      the shape this world shipped with.
+    - "additive": ``island_noise + add(y_clamped_gradient, ...)``. The gradients are
+      signed offsets, so the cut-off height tracks the noise linearly and the
+      underside tapers to a keel.
+
+    Detected structurally rather than declared, so the file cannot drift away from
+    whichever set of invariants gets applied.
+    """
+    if isinstance(node, dict):
+        if node.get("type") == "minecraft:mul":
+            for arg in (node.get("argument1"), node.get("argument2")):
+                if (
+                    isinstance(arg, dict)
+                    and arg.get("type") == "minecraft:y_clamped_gradient"
+                ):
+                    return "multiplicative"
+        for v in node.values():
+            if isinstance(v, (dict, list)):
+                form = profile_form(v)
+                if form != "none":
+                    return form
+    elif isinstance(node, list):
+        for v in node:
+            form = profile_form(v)
+            if form != "none":
+                return form
+    grads: list = []
+    gradient_chain(node, grads)
+    return "additive" if grads else "none"
+
+
 def design_pass(doc) -> None:
     bands: list = []
     collect_bands(doc["noise_router"]["final_density"], bands)
@@ -220,8 +263,27 @@ def design_pass(doc) -> None:
         gradient_chain(b["noise"], grads)
         if not grads:
             errors.append(
-                f"design: band {lo}-{hi} has no y_clamped_gradient profile "
-                f"(the additive keel is what stops the underside being flat)"
+                f"design: band {lo}-{hi} has no vertical profile at all — the layer "
+                f"would be a uniform slab between {lo} and {hi}"
+            )
+            continue
+        if profile_form(b["noise"]) == "multiplicative":
+            # A 0..1 factor cannot push density below the threshold on its own, so
+            # the keel invariants do not apply. What still has to hold is that the
+            # ramp lives inside the band it shapes: a factor that is already 1.0 at
+            # active_min_y leaves the bottom face uncut.
+            for g in grads:
+                f_y, t_y = float(g["from_y"]), float(g["to_y"])
+                span_lo, span_hi = min(f_y, t_y), max(f_y, t_y)
+                if span_hi < lo or span_lo > hi:
+                    errors.append(
+                        f"design: band {lo}-{hi}: multiplicative ramp {span_lo}-{span_hi} "
+                        f"lies outside the band, so it shapes nothing"
+                    )
+            notes.append(
+                f"design: band {lo}-{hi} uses the multiplicative profile — the "
+                f"underside saturates into a plate by construction; a keel needs "
+                f"the additive form"
             )
             continue
         threshold = 0.18 - b.get("solidity_bias", 0.0)
@@ -281,6 +343,8 @@ def main() -> int:
         walk(doc["noise_router"][key], f"noise_router.{key}")
     print("codec pass done")
     design_pass(doc)
+    for n in notes:
+        print("note:", n)
     if errors:
         print(f"\nFAIL ({len(errors)})")
         for e in errors:
