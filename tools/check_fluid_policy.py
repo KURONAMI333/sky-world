@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static check for Sky World's fluid policy. JSON is not validated by the Gradle build,
+"""Static check for Sky World's fluid policy and cloud height. JSON is not validated by the Gradle build,
 so this walks the files by hand against the 1.21.1 codec field sets.
 
 Run from anywhere:  python mod-030-sky-world/tools/check_fluid_policy.py
@@ -12,6 +12,7 @@ mod-029's SlopeFilterModifier.CODEC. Exit code 0 = all checks pass.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -265,6 +266,38 @@ def check_neutralised() -> None:
             )
 
 
+def check_cloud_above_bands() -> None:
+    """The cloud plane must clear the highest island band.
+
+    Vanilla's 192 cut through the middle band, which is the defect this replaces. The band
+    ceilings live in the noise settings and are edited independently of the client class, so
+    assert the coupling here rather than discovering it in a screenshot.
+    """
+    java = ROOT / "src/main/java/com/kuronami/skyworld/client/SkyWorldDimensionEffects.java"
+    if not java.exists():
+        err("missing SkyWorldDimensionEffects.java")
+        return
+    m = re.search(r"CLOUD_LEVEL\s*=\s*([0-9.]+)F", java.read_text(encoding="utf-8"))
+    if not m:
+        err("SkyWorldDimensionEffects: could not read CLOUD_LEVEL")
+        return
+    cloud = float(m.group(1))
+    ns = load("data/minecraft/worldgen/noise_settings/overworld.json")
+    if ns is None:
+        return
+    tops = [int(v) for v in re.findall(r'"active_max_y":\s*(-?\d+)', json.dumps(ns))]
+    if not tops:
+        err("noise_settings/overworld.json: no active_max_y found — band layout changed shape")
+        return
+    top = max(tops)
+    if cloud <= top:
+        err(f"CLOUD_LEVEL {cloud} is not above the top island band ceiling {top} — "
+            "the cloud sheet will cut through island rock again")
+    else:
+        notes.append(f"cloud plane {cloud:.0f} clears the top band ceiling {top} "
+                     f"by {cloud - top:.0f} blocks")
+
+
 def main() -> int:
     rw = check_disk("data/sky_world/worldgen/configured_feature/pond_water.json")
     rl = check_disk("data/sky_world/worldgen/configured_feature/pond_lava.json")
@@ -280,6 +313,7 @@ def main() -> int:
     )
     check_worldshapes()
     check_biome_modifier()
+    check_cloud_above_bands()
     check_neutralised()
 
     for n in notes:
