@@ -184,7 +184,7 @@
                 "active_min_y": 8,
                 "active_max_y": 112,
                 "gradient_width": 10,
-                "solidity_bias": -0.12,
+                "solidity_bias": -0.08,
                 "noise": {
                   "type": "minecraft:add",
                   "argument1": {
@@ -249,9 +249,9 @@
               "argument2": {
                 "type": "isekai_api:band_density",
                 "active_min_y": 110,
-                "active_max_y": 188,
+                "active_max_y": 194,
                 "gradient_width": 10,
-                "solidity_bias": -0.26,
+                "solidity_bias": -0.1,
                 "noise": {
                   "type": "minecraft:add",
                   "argument1": {
@@ -317,9 +317,9 @@
             "argument2": {
               "type": "isekai_api:band_density",
               "active_min_y": 186,
-              "active_max_y": 250,
+              "active_max_y": 252,
               "gradient_width": 10,
-              "solidity_bias": -0.46,
+              "solidity_bias": -0.16,
               "noise": {
                 "type": "minecraft:add",
                 "argument1": {
