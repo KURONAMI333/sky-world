@@ -1,0 +1,9 @@
+{
+  "feature": "minecraft:spring_lava_frozen",
+  "placement": [
+    {
+      "type": "minecraft:count",
+      "count": 0
+    }
+  ]
+}
