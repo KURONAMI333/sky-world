@@ -35,6 +35,6 @@ It also ships a **standalone Sky Realm dimension** (`/execute in sky_world:skyre
 
 ## License & links
 
-MIT. Source & issues: https://github.com/KURONAMI333/sky-world
+All Rights Reserved (free to put in any modpack, no permission or credit needed). Source & issues: https://github.com/KURONAMI333/sky-world
 
 Built on [Isekai API](https://modrinth.com/mod/isekai-api).
