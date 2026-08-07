@@ -51,3 +51,6 @@ fabric-1.20.1/
 
 ### Branding / publish tooling (icon ships via src/main/resources/sky_world.png) ###
 branding/
+
+### Python tooling ###
+tools/__pycache__/
