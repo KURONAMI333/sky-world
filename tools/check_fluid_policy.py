@@ -201,18 +201,33 @@ def check_worldshapes() -> None:
             for k in LEAKING:
                 if k not in excl:
                     err(f"{where}: exclusions.features is missing {k}")
-            adds = [
-                a.get("feature") for a in d.get("additions", {}).get("features", [])
-            ]
-            for p in PONDS:
-                if p not in adds:
-                    err(f"{where}: additions.features is missing {p}")
-            for a in d.get("additions", {}).get("features", []):
-                if a.get("step") != "lakes":
-                    err(
-                        f"{where}: pond step is {a.get('step')!r}; must be 'lakes' so vegetation "
-                        "generates after the water and never floats over it"
-                    )
+            if "additions" in d:
+                err(
+                    f"{where}: ponds are injected by the neoforge:add_features biome modifier, "
+                    "not by worldshape additions — two paths would place every pond twice"
+                )
+def check_biome_modifier() -> None:
+    """The ponds are injected by NeoForge's own biome modifier, not by the worldshape.
+
+    Isekai's additions path needs a live server context at modify time; the NeoForge modifier
+    has no such dependency, and E2 (a reachable water source) must not hinge on that timing.
+    One file also beats six descriptor copies across the two comparison datapacks.
+    """
+    rel = "data/sky_world/neoforge/biome_modifier/add_ponds.json"
+    obj = load(rel)
+    if obj is None:
+        return
+    if obj.get("type") != "neoforge:add_features":
+        err(f"{rel}: type must be neoforge:add_features")
+    if obj.get("biomes") != "#minecraft:is_overworld":
+        err(f"{rel}: biomes must be #minecraft:is_overworld to match the worldshape's applies_to")
+    feats = obj.get("features", [])
+    for p in PONDS:
+        if p not in feats:
+            err(f"{rel}: features is missing {p}")
+    if obj.get("step") != "lakes":
+        err(f"{rel}: step is {obj.get('step')!r}; must be 'lakes' so vegetation generates after "
+            "the water and never floats over it")
 
 
 def check_neutralised() -> None:
@@ -252,6 +267,7 @@ def main() -> int:
         rl,
     )
     check_worldshapes()
+    check_biome_modifier()
     check_neutralised()
 
     for n in notes:
