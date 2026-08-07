@@ -87,8 +87,7 @@
       "minecraft:lake_lava_underground",
       "minecraft:iceberg_blue",
       "minecraft:iceberg_packed",
-      "minecraft:blue_ice",
-      "minecraft:amethyst_geode"
+      "minecraft:blue_ice"
     ],
     "mob_spawns": []
   },
