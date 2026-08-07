@@ -1,0 +1,29 @@
+{
+  "type": "minecraft:disk",
+  "config": {
+    "state_provider": {
+      "fallback": {
+        "type": "minecraft:simple_state_provider",
+        "state": {
+          "Name": "minecraft:lava",
+          "Properties": { "level": "0" }
+        }
+      },
+      "rules": []
+    },
+    "target": {
+      "type": "minecraft:matching_blocks",
+      "blocks": [
+        "minecraft:stone",
+        "minecraft:gravel",
+        "minecraft:red_sand"
+      ]
+    },
+    "radius": {
+      "type": "minecraft:uniform",
+      "min_inclusive": 1,
+      "max_inclusive": 1
+    },
+    "half_height": 0
+  }
+}

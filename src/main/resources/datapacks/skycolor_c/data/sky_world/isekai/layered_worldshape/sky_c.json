@@ -107,7 +107,9 @@
             "minecraft:spring_open",
             "minecraft:spring_closed",
             "minecraft:spring_closed_double",
-            "minecraft:spring_delta"
+            "minecraft:spring_delta",
+            "minecraft:lake_lava_surface",
+            "minecraft:lake_lava_underground"
           ],
           "mob_spawns": []
         },
@@ -118,6 +120,18 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 12178664
+        },
+        "additions": {
+          "features": [
+            {
+              "feature": "sky_world:pond_water",
+              "step": "lakes"
+            },
+            {
+              "feature": "sky_world:pond_lava",
+              "step": "lakes"
+            }
+          ]
         }
       },
       "transition": {
@@ -220,7 +234,9 @@
             "minecraft:spring_open",
             "minecraft:spring_closed",
             "minecraft:spring_closed_double",
-            "minecraft:spring_delta"
+            "minecraft:spring_delta",
+            "minecraft:lake_lava_surface",
+            "minecraft:lake_lava_underground"
           ],
           "mob_spawns": []
         },
@@ -231,6 +247,18 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 12372443
+        },
+        "additions": {
+          "features": [
+            {
+              "feature": "sky_world:pond_water",
+              "step": "lakes"
+            },
+            {
+              "feature": "sky_world:pond_lava",
+              "step": "lakes"
+            }
+          ]
         }
       },
       "transition": {
@@ -336,7 +364,9 @@
             "minecraft:spring_open",
             "minecraft:spring_closed",
             "minecraft:spring_closed_double",
-            "minecraft:spring_delta"
+            "minecraft:spring_delta",
+            "minecraft:lake_lava_surface",
+            "minecraft:lake_lava_underground"
           ],
           "mob_spawns": []
         },
@@ -347,6 +377,18 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 7979992
+        },
+        "additions": {
+          "features": [
+            {
+              "feature": "sky_world:pond_water",
+              "step": "lakes"
+            },
+            {
+              "feature": "sky_world:pond_lava",
+              "step": "lakes"
+            }
+          ]
         }
       },
       "transition": {
@@ -443,7 +485,9 @@
             "minecraft:spring_open",
             "minecraft:spring_closed",
             "minecraft:spring_closed_double",
-            "minecraft:spring_delta"
+            "minecraft:spring_delta",
+            "minecraft:lake_lava_surface",
+            "minecraft:lake_lava_underground"
           ],
           "mob_spawns": []
         },
@@ -454,6 +498,18 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 9221861
+        },
+        "additions": {
+          "features": [
+            {
+              "feature": "sky_world:pond_water",
+              "step": "lakes"
+            },
+            {
+              "feature": "sky_world:pond_lava",
+              "step": "lakes"
+            }
+          ]
         }
       },
       "transition": {
