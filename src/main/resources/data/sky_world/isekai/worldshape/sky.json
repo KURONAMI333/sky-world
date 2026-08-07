@@ -92,17 +92,5 @@
     "fog_near_distance": 64.0,
     "fog_far_distance": 256.0
   },
-  "priority": 100,
-  "additions": {
-    "features": [
-      {
-        "feature": "sky_world:pond_water",
-        "step": "lakes"
-      },
-      {
-        "feature": "sky_world:pond_lava",
-        "step": "lakes"
-      }
-    ]
-  }
+  "priority": 100
 }

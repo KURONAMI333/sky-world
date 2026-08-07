@@ -120,18 +120,6 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 12178664
-        },
-        "additions": {
-          "features": [
-            {
-              "feature": "sky_world:pond_water",
-              "step": "lakes"
-            },
-            {
-              "feature": "sky_world:pond_lava",
-              "step": "lakes"
-            }
-          ]
         }
       },
       "transition": {
@@ -247,18 +235,6 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 12372443
-        },
-        "additions": {
-          "features": [
-            {
-              "feature": "sky_world:pond_water",
-              "step": "lakes"
-            },
-            {
-              "feature": "sky_world:pond_lava",
-              "step": "lakes"
-            }
-          ]
         }
       },
       "transition": {
@@ -377,18 +353,6 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 7979992
-        },
-        "additions": {
-          "features": [
-            {
-              "feature": "sky_world:pond_water",
-              "step": "lakes"
-            },
-            {
-              "feature": "sky_world:pond_lava",
-              "step": "lakes"
-            }
-          ]
         }
       },
       "transition": {
@@ -498,18 +462,6 @@
         "priority": 100,
         "atmosphere": {
           "sky_color": 9221861
-        },
-        "additions": {
-          "features": [
-            {
-              "feature": "sky_world:pond_water",
-              "step": "lakes"
-            },
-            {
-              "feature": "sky_world:pond_lava",
-              "step": "lakes"
-            }
-          ]
         }
       },
       "transition": {

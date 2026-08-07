@@ -95,17 +95,5 @@
   "priority": 200,
   "atmosphere": {
     "sky_color": 8308963
-  },
-  "additions": {
-    "features": [
-      {
-        "feature": "sky_world:pond_water",
-        "step": "lakes"
-      },
-      {
-        "feature": "sky_world:pond_lava",
-        "step": "lakes"
-      }
-    ]
   }
 }
