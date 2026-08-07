@@ -87,8 +87,16 @@ def check_pool(rel: str, obj: dict) -> int:
             f"what makes a scatter read as a repeated stamp rather than terrain"
         )
         return -1
-    inner = r.get("value", r)
-    lo, hi = inner.get("min_inclusive"), inner.get("max_inclusive")
+    # UniformInt's codec is a MapCodec, so the dispatch puts min/max inline beside
+    # "type". A "value" wrapper parses as neither a bare number nor a uniform and
+    # kills registry load — accept only the form the game accepts.
+    if "value" in r:
+        err(
+            f"{rel}: xz_radius has a 'value' wrapper — IntProvider dispatch is inline, "
+            f'write {{"type":"minecraft:uniform","min_inclusive":N,"max_inclusive":M}}'
+        )
+        return -1
+    lo, hi = r.get("min_inclusive"), r.get("max_inclusive")
     if not (isinstance(lo, int) and isinstance(hi, int) and 1 <= lo <= hi <= 64):
         err(f"{rel}: xz_radius out of the codec range 1..64: {lo}..{hi}")
         return -1
