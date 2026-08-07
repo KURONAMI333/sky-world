@@ -1,27 +1,25 @@
 {
-  "type": "minecraft:disk",
+  "type": "isekai_api:pool",
   "config": {
-    "state_provider": {
-      "fallback": {
-        "type": "minecraft:simple_state_provider",
-        "state": {
-          "Name": "minecraft:lava",
-          "Properties": {
-            "level": "0"
-          }
-        }
-      },
-      "rules": []
+    "fluid": {
+      "Name": "minecraft:lava",
+      "Properties": {
+        "level": "0"
+      }
     },
-    "target": {
-      "type": "minecraft:matching_blocks",
-      "blocks": "#sky_world:lava_pond_ground"
+    "rim_block": {
+      "type": "minecraft:simple_state_provider",
+      "state": {
+        "Name": "minecraft:stone"
+      }
     },
-    "radius": {
+    "xz_radius": {
       "type": "minecraft:uniform",
-      "min_inclusive": 2,
-      "max_inclusive": 3
+      "value": {
+        "min_inclusive": 2,
+        "max_inclusive": 4
+      }
     },
-    "half_height": 0
+    "depth": 2
   }
 }

@@ -60,13 +60,62 @@ def load(rel: str):
         return None
 
 
+def check_pool(rel: str, obj: dict) -> int:
+    """isekai_api:pool — a carved basin. Returns the maximum xz_radius, or -1.
+
+    The no-spill guarantee is different in kind from the flush-disk one. ``pool``
+    carves the disc, lines the rim and floor with ``rim_block``, then fills to the
+    rim height, so the fluid is enclosed by construction and its own depth is what
+    keeps it below the lip. That makes ``depth`` a safety field, not decoration:
+    at depth 0 there is no lip left to hold anything.
+    """
+    cfg = obj.get("config", {})
+    expected = {"fluid", "rim_block", "xz_radius", "depth"}
+    if set(cfg) != expected:
+        err(f"{rel}: config fields {sorted(cfg)} != {sorted(expected)}")
+    fluid = cfg.get("fluid", {})
+    if fluid.get("Properties", {}).get("level") != "0":
+        err(f"{rel}: fluid must be a source block (level 0), not flowing")
+    depth = cfg.get("depth")
+    if not (isinstance(depth, int) and 1 <= depth <= 32):
+        err(f"{rel}: depth must be 1..32 (codec range); a basin needs a lip")
+        return -1
+    r = cfg.get("xz_radius", {})
+    if r.get("type") != "minecraft:uniform":
+        err(
+            f"{rel}: xz_radius should be minecraft:uniform — a single fixed size is "
+            f"what makes a scatter read as a repeated stamp rather than terrain"
+        )
+        return -1
+    inner = r.get("value", r)
+    lo, hi = inner.get("min_inclusive"), inner.get("max_inclusive")
+    if not (isinstance(lo, int) and isinstance(hi, int) and 1 <= lo <= hi <= 64):
+        err(f"{rel}: xz_radius out of the codec range 1..64: {lo}..{hi}")
+        return -1
+    if lo == hi:
+        err(
+            f"{rel}: xz_radius is a single value ({lo}) — vary it so the pools do "
+            f"not all come out the same size"
+        )
+    return hi
+
+
 def check_disk(rel: str) -> int:
-    """Returns the maximum disk radius, or -1 on error."""
+    """Returns the maximum pond radius, or -1 on error.
+
+    Two shapes are accepted, and they are not interchangeable:
+    ``minecraft:disk`` paints one flush layer (no basin, reads as a patch on flat
+    ground) and ``isekai_api:pool`` carves a real depression. Both are checked for
+    the property that actually matters — the fluid cannot escape — but through
+    their own invariants.
+    """
     obj = load(rel)
     if obj is None:
         return -1
+    if obj.get("type") == "isekai_api:pool":
+        return check_pool(rel, obj)
     if obj.get("type") != "minecraft:disk":
-        err(f"{rel}: type must be minecraft:disk")
+        err(f"{rel}: type must be minecraft:disk or isekai_api:pool")
         return -1
     cfg = obj.get("config", {})
     expected = {"state_provider", "target", "radius", "half_height"}
@@ -101,9 +150,11 @@ def check_disk(rel: str) -> int:
     elif blocks.startswith("#sky_world:"):
         name = blocks.split(":", 1)[1]
         if not (RES / f"data/sky_world/tags/block/{name}.json").exists():
-            err(f"{rel}: target.blocks references {blocks} but no such tag file exists "
+            err(
+                f"{rel}: target.blocks references {blocks} but no such tag file exists "
                 f"(expected data/sky_world/tags/block/{name}.json — note 1.21 uses the "
-                "singular 'tags/block' directory)")
+                "singular 'tags/block' directory)"
+            )
     return hi
 
 
@@ -176,6 +227,27 @@ def check_placed(rel: str, feature: str, disk_radius: int) -> None:
                 f"{rel}: slope_filter admits a height delta of at most "
                 f"{int(ms * sr)} block(s) at +-{sr} on each cardinal axis"
             )
+        elif t == "minecraft:rarity_filter":
+            # Density is the whole difference between "a pond" and "a rash of ponds".
+            # minecraft:count fires every chunk; rarity_filter fires in one chunk of
+            # `chance`. Anything denser than one chunk in four covers the ground.
+            c = m.get("chance")
+            if set(m) != {"type", "chance"}:
+                err(f"{rel}: rarity_filter takes only 'chance'")
+            if not (isinstance(c, int) and c >= 1):
+                err(f"{rel}: rarity_filter chance must be a positive int")
+            elif c < 4:
+                err(
+                    f"{rel}: rarity_filter chance {c} puts a pond in one chunk of {c} — "
+                    "too dense to read as terrain"
+                )
+            else:
+                notes.append(f"{rel}: one attempt per {c} chunks")
+        elif t == "minecraft:count":
+            err(
+                f"{rel}: minecraft:count fires in every chunk — use "
+                "minecraft:rarity_filter so most chunks get nothing"
+            )
         elif t in ("minecraft:in_square", "minecraft:biome"):
             if set(m) != {"type"}:
                 err(f"{rel}: {t} takes no fields")
@@ -219,6 +291,8 @@ def check_worldshapes() -> None:
                     f"{where}: ponds are injected by the neoforge:add_features biome modifier, "
                     "not by worldshape additions — two paths would place every pond twice"
                 )
+
+
 def check_biome_modifier() -> None:
     """The ponds are injected by NeoForge's own biome modifier, not by the worldshape.
 
@@ -233,14 +307,18 @@ def check_biome_modifier() -> None:
     if obj.get("type") != "neoforge:add_features":
         err(f"{rel}: type must be neoforge:add_features")
     if obj.get("biomes") != "#minecraft:is_overworld":
-        err(f"{rel}: biomes must be #minecraft:is_overworld to match the worldshape's applies_to")
+        err(
+            f"{rel}: biomes must be #minecraft:is_overworld to match the worldshape's applies_to"
+        )
     feats = obj.get("features", [])
     for p in PONDS:
         if p not in feats:
             err(f"{rel}: features is missing {p}")
     if obj.get("step") != "lakes":
-        err(f"{rel}: step is {obj.get('step')!r}; must be 'lakes' so vegetation generates after "
-            "the water and never floats over it")
+        err(
+            f"{rel}: step is {obj.get('step')!r}; must be 'lakes' so vegetation generates after "
+            "the water and never floats over it"
+        )
 
 
 def check_neutralised() -> None:
@@ -273,7 +351,10 @@ def check_cloud_above_bands() -> None:
     ceilings live in the noise settings and are edited independently of the client class, so
     assert the coupling here rather than discovering it in a screenshot.
     """
-    java = ROOT / "src/main/java/com/kuronami/skyworld/client/SkyWorldDimensionEffects.java"
+    java = (
+        ROOT
+        / "src/main/java/com/kuronami/skyworld/client/SkyWorldDimensionEffects.java"
+    )
     if not java.exists():
         err("missing SkyWorldDimensionEffects.java")
         return
@@ -287,15 +368,21 @@ def check_cloud_above_bands() -> None:
         return
     tops = [int(v) for v in re.findall(r'"active_max_y":\s*(-?\d+)', json.dumps(ns))]
     if not tops:
-        err("noise_settings/overworld.json: no active_max_y found — band layout changed shape")
+        err(
+            "noise_settings/overworld.json: no active_max_y found — band layout changed shape"
+        )
         return
     top = max(tops)
     if cloud <= top:
-        err(f"CLOUD_LEVEL {cloud} is not above the top island band ceiling {top} — "
-            "the cloud sheet will cut through island rock again")
+        err(
+            f"CLOUD_LEVEL {cloud} is not above the top island band ceiling {top} — "
+            "the cloud sheet will cut through island rock again"
+        )
     else:
-        notes.append(f"cloud plane {cloud:.0f} clears the top band ceiling {top} "
-                     f"by {cloud - top:.0f} blocks")
+        notes.append(
+            f"cloud plane {cloud:.0f} clears the top band ceiling {top} "
+            f"by {cloud - top:.0f} blocks"
+        )
 
 
 def main() -> int:
