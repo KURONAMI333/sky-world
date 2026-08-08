@@ -1,9 +1,9 @@
 {
-  "feature": "sky_world:lake_water",
+  "feature": "sky_world:pond_water",
   "placement": [
     {
       "type": "minecraft:rarity_filter",
-      "chance": 24
+      "chance": 12
     },
     {
       "type": "minecraft:in_square"
