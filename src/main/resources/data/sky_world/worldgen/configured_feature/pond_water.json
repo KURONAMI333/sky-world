@@ -10,7 +10,7 @@
     "rim_block": {
       "type": "minecraft:simple_state_provider",
       "state": {
-        "Name": "minecraft:coarse_dirt"
+        "Name": "minecraft:dirt"
       }
     },
     "xz_radius": {
