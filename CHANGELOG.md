@@ -10,9 +10,15 @@ Requires Isekai API 2.1.0. **World-generation change: existing worlds keep their
 old terrain — start a new world.**
 
 ### Added
-- Three altitude tiers instead of one uniform band. Low tier Y=8..100 (broad,
-  sparse), main tier Y=90..202 (dense, where you live), high tier Y=198..256
-  (small, rare), combined with `minecraft:max`.
+- Three altitude tiers instead of one uniform band, combined with
+  `minecraft:max`. Islands are solid across each tier's active band and fade to
+  air over its `gradient_width` on either side:
+
+  | tier | solid band | fades out over |
+  |---|---|---|
+  | low (broad, sparse) | Y 30–78 | Y 8–100 |
+  | main (dense, where you live) | Y 116–176 | Y 90–202 |
+  | high (small, rare) | Y 212–242 | Y 198–256 |
 - Island undersides taper. Each tier's noise is multiplied by a
   `minecraft:y_clamped_gradient` over the lower part of its band, so density
   falls off quadratically downward instead of mirroring the top.
@@ -38,7 +44,7 @@ old terrain — start a new world.**
   again; the green sky is gone.
 - `content_overrides.block_overrides` (cherry_grove quartz/calcite).
 
-## [1.1.0] — 2026-08-05
+## [1.1.0] — never published (its changes ship inside 2.0.0)
 
 Requires Isekai API 2.x. No world-generation change: terrain, biomes, ores,
 structures and surface blocks are identical to 1.0.0.
