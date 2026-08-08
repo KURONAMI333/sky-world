@@ -57,6 +57,14 @@ LEAKING = [
 ]
 
 # Vanilla's only open-surface fluid feature fires in one chunk out of this many.
+# Ore features replace these, and they run five steps after LAKES.
+ORE_REPLACEABLE = {
+    "minecraft:stone",
+    "minecraft:granite",
+    "minecraft:diorite",
+    "minecraft:andesite",
+}
+
 VANILLA_SURFACE_LAKE_RARITY = 200
 # No ocean here, so surface lakes carry the whole water supply. That earns a multiple of
 # vanilla's density, but a bounded one: 1/8 read as "too many", 1/48 as "maybe too few".
@@ -115,8 +123,18 @@ def check_water_configured(rel: str) -> None:
         err(f"{rel}: fluid must be a source block (level 0), not flowing")
     # rim_block lines the whole shell, not just the floor — that lining is what closes
     # the edge. Without it the basin's sides are whatever the terrain happened to be.
-    if not cfg.get("rim_block", {}).get("state", {}).get("Name"):
+    rim = cfg.get("rim_block", {}).get("state", {}).get("Name")
+    if not rim:
         err(f"{rel}: rim_block has no block — the basin would have no lining")
+    elif rim in ORE_REPLACEABLE:
+        # LAKES is step 1 and UNDERGROUND_ORES is step 6, so anything this lining puts
+        # at the surface is still there when ore generation runs. With column_local the
+        # shallow bands sit just under the surface, so a stone lining comes back out as
+        # a ring of coal and iron around the pond. Line with something ores ignore.
+        err(
+            f"{rel}: rim_block {rim} is in #minecraft:stone_ore_replaceables — ore "
+            "generation runs after LAKES and will turn the lining into an ore ring"
+        )
     r = cfg.get("xz_radius", {})
     if "value" in r:
         err(f"{rel}: xz_radius has a 'value' wrapper — IntProvider dispatch is inline")
