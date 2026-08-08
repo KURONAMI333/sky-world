@@ -4,7 +4,7 @@ All notable changes to Sky World follow this file. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/); versions before 1.0.0 were
 development-only and not released.
 
-## [2.0.0] — unreleased
+## [2.0.0] — 2026-08-08
 
 Requires Isekai API 2.1.0. **World-generation change: existing worlds keep their
 old terrain — start a new world.**
