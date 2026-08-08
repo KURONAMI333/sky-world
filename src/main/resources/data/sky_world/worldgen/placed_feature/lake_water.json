@@ -1,5 +1,5 @@
 {
-  "feature": "sky_world:pond_water",
+  "feature": "sky_world:lake_water",
   "placement": [
     {
       "type": "minecraft:rarity_filter",
@@ -13,11 +13,7 @@
       "heightmap": "WORLD_SURFACE_WG"
     },
     {
-      "type": "isekai_api:slope_filter",
-      "min_slope": 0.0,
-      "max_slope": 0.25,
-      "sample_radius": 8,
-      "heightmap": "WORLD_SURFACE_WG"
+      "type": "minecraft:biome"
     }
   ]
 }

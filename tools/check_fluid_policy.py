@@ -1,12 +1,34 @@
 #!/usr/bin/env python3
-"""Static check for Sky World's fluid policy and cloud height. JSON is not validated by the Gradle build,
-so this walks the files by hand against the 1.21.1 codec field sets.
+"""Static check for Sky World's fluid policy and cloud height.
+
+The Gradle build does not parse worldgen JSON, so registry load at world creation is
+the first thing that would catch a mistake here — after the client is already up. This
+walks the files by hand against the 1.21.1 codec field sets instead.
 
 Run from anywhere:  python mod-030-sky-world/tools/check_fluid_policy.py
+Exit code 0 = all checks pass.
 
-Field sets and ranges below were read out of the decompiled 1.21.1 sources
-(DiskConfiguration / CountPlacement / RandomOffsetPlacement / HeightmapPlacement) and out of
-mod-029's SlopeFilterModifier.CODEC. Exit code 0 = all checks pass.
+WHAT THIS FILE ENCODES, AND WHY
+-------------------------------
+Surface water on floating islands went through six rounds of rejection before landing.
+The rules below are the residue of those rounds, so that the next island world does not
+repeat them:
+
+1. Fluid features that place a source inside a wall (the `spring_*` family) spill off an
+   island rim and fall forever, because there is no ground to land on. They must be both
+   excluded in the worldshape AND neutralised with a data/minecraft override — one is
+   not enough, historically because Isekai's ADD phase re-injected excluded features
+   (fixed in isekai_api 2.1.0, but the belt-and-braces stays: a datapack that only works
+   against one library version is a trap).
+2. `minecraft:lake` does NOT need that treatment. It tests the solidity of its own shell
+   before writing a single block and returns false when the site cannot hold water, so
+   it declines to generate on a thin rim rather than leaking over it.
+3. Density is measured against vanilla, not chosen by feel. `lake_lava_surface` is the
+   only vanilla feature that puts fluid on the open surface, at one chunk in 200.
+4. Custom fluid primitives are a smell. Sky World used `isekai_api:pool` for a while and
+   got a mathematically round, unenclosed puddle; vanilla's lake gets an irregular,
+   walled one out of the box. If a fluid feature here is not `minecraft:lake`, that is a
+   decision that needs stating, not a default to drift into.
 """
 
 from __future__ import annotations
@@ -19,17 +41,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "src" / "main" / "resources"
 
-# Vanilla placed features that leak fluid over an island rim. Every one of them must be both
-# excluded in the worldshape and neutralised by a data/minecraft override, because Isekai's
-# ADD phase re-injects any excluded feature that carries a HeightRangePlacement (see report).
+# Features that place a fluid source with no basin around it. Each must appear in the
+# worldshape exclusions AND be neutralised by a data/minecraft placed_feature override.
 LEAKING = [
     "minecraft:spring_water",
     "minecraft:spring_lava",
     "minecraft:spring_lava_frozen",
-    "minecraft:lake_lava_surface",
-    "minecraft:lake_lava_underground",
+    "minecraft:lake_lava_underground",  # a cave feature; this world excludes all carvers
 ]
-PONDS = ["sky_world:pond_water", "sky_world:pond_lava"]
+
+# Vanilla's only open-surface fluid feature fires in one chunk out of this many.
+VANILLA_SURFACE_LAKE_RARITY = 200
+# No ocean here, so surface lakes carry the whole water supply. That earns a multiple of
+# vanilla's density, but a bounded one: 1/8 read as "too many", 1/48 as "maybe too few".
+NO_OCEAN_DENSITY_FACTOR = 16
 
 HEIGHTMAPS = {
     "WORLD_SURFACE_WG",
@@ -39,20 +64,6 @@ HEIGHTMAPS = {
     "MOTION_BLOCKING",
     "MOTION_BLOCKING_NO_LEAVES",
 }
-
-# Measured from vanilla 1.21.1: minecraft:lake_lava_surface is the only feature
-# that puts fluid on the open surface, and it fires in one chunk out of this many.
-VANILLA_SURFACE_LAKE_RARITY = 200
-# This world has no ocean, so surface pools are the only water there is. That earns a
-# multiple of vanilla's density, but a bounded one — kura called 1/8 "too many" and
-# 1/48 "maybe too few", so the usable band sits around 1/24.
-NO_OCEAN_DENSITY_FACTOR = 16
-# Files that have already passed a rarity_filter, so a later count is multiplicity
-# within one rare site rather than a per-chunk density driver.
-seen_rarity: set[str] = set()
-# Which shape each placed feature's configured feature turned out to be. The
-# surface anchor differs between them, so the placement check needs to know.
-FORM: dict[str, str] = {}
 
 errors: list[str] = []
 notes: list[str] = []
@@ -74,125 +85,37 @@ def load(rel: str):
         return None
 
 
-def check_pool(rel: str, obj: dict) -> int:
-    """isekai_api:pool — a carved basin. Returns the maximum xz_radius, or -1.
-
-    The no-spill guarantee is different in kind from the flush-disk one. ``pool``
-    carves the disc, lines the rim and floor with ``rim_block``, then fills to the
-    rim height, so the fluid is enclosed by construction and its own depth is what
-    keeps it below the lip. That makes ``depth`` a safety field, not decoration:
-    at depth 0 there is no lip left to hold anything.
-    """
-    cfg = obj.get("config", {})
-    expected = {"fluid", "rim_block", "xz_radius", "depth", "irregularity"}
-    if set(cfg) != expected:
-        err(f"{rel}: config fields {sorted(cfg)} != {sorted(expected)}")
-    fluid = cfg.get("fluid", {})
-    if fluid.get("Properties", {}).get("level") != "0":
-        err(f"{rel}: fluid must be a source block (level 0), not flowing")
-    depth = cfg.get("depth")
-    if not (isinstance(depth, int) and 1 <= depth <= 32):
-        err(f"{rel}: depth must be 1..32 (codec range); a basin needs a lip")
-        return -1
-    r = cfg.get("xz_radius", {})
-    if r.get("type") != "minecraft:uniform":
-        err(
-            f"{rel}: xz_radius should be minecraft:uniform — a single fixed size is "
-            f"what makes a scatter read as a repeated stamp rather than terrain"
-        )
-        return -1
-    # UniformInt's codec is a MapCodec, so the dispatch puts min/max inline beside
-    # "type". A "value" wrapper parses as neither a bare number nor a uniform and
-    # kills registry load — accept only the form the game accepts.
-    if "value" in r:
-        err(
-            f"{rel}: xz_radius has a 'value' wrapper — IntProvider dispatch is inline, "
-            f'write {{"type":"minecraft:uniform","min_inclusive":N,"max_inclusive":M}}'
-        )
-        return -1
-    lo, hi = r.get("min_inclusive"), r.get("max_inclusive")
-    if not (isinstance(lo, int) and isinstance(hi, int) and 1 <= lo <= hi <= 64):
-        err(f"{rel}: xz_radius out of the codec range 1..64: {lo}..{hi}")
-        return -1
-    if lo == hi:
-        err(
-            f"{rel}: xz_radius is a single value ({lo}) — vary it so the pools do "
-            f"not all come out the same size"
-        )
-    # A pool at irregularity 0 is a compass circle, which is what kura rejected. The
-    # feature bites inward only, so the mean radius shrinks by about half the value —
-    # xz_radius has to be raised to compensate or the pools come out smaller too.
-    irr = cfg.get("irregularity")
-    if not isinstance(irr, (int, float)):
-        err(f"{rel}: irregularity must be a number")
-    elif irr < 0.2:
-        err(f"{rel}: irregularity {irr} still reads as a circle — 0.3..0.5 is the band")
-    elif irr > 0.6:
-        err(f"{rel}: irregularity {irr} looks gnawed rather than natural")
-    return hi
-
-
-def check_disk(rel: str) -> int:
-    """Returns the maximum pond radius, or -1 on error.
-
-    Two shapes are accepted, and they are not interchangeable:
-    ``minecraft:disk`` paints one flush layer (no basin, reads as a patch on flat
-    ground) and ``isekai_api:pool`` carves a real depression. Both are checked for
-    the property that actually matters — the fluid cannot escape — but through
-    their own invariants.
-    """
+def check_lake_configured(rel: str) -> None:
+    """The water lake. Vanilla ships no surface water lake in 1.21, so this is the one
+    fluid feature Sky World defines itself — and it is vanilla's own feature type with a
+    different fluid, not a new primitive."""
     obj = load(rel)
     if obj is None:
-        return -1
-    if obj.get("type") == "isekai_api:pool":
-        FORM[rel] = "pool"
-        return check_pool(rel, obj)
-    FORM[rel] = "disk"
-    if obj.get("type") != "minecraft:disk":
-        err(f"{rel}: type must be minecraft:disk or isekai_api:pool")
-        return -1
+        return
+    if obj.get("type") != "minecraft:lake":
+        err(
+            f"{rel}: type is {obj.get('type')!r}, not minecraft:lake. A custom fluid "
+            "feature has to justify itself against LakeFeature's shell-solidity test — "
+            "see this file's header"
+        )
+        return
     cfg = obj.get("config", {})
-    expected = {"state_provider", "target", "radius", "half_height"}
-    if set(cfg) != expected:
-        err(f"{rel}: config fields {sorted(cfg)} != {sorted(expected)}")
-    sp = cfg.get("state_provider", {})
-    if set(sp) - {"fallback", "rules"}:
-        err(
-            f"{rel}: state_provider is a RuleBasedBlockStateProvider (fallback/rules only)"
-        )
-    if cfg.get("half_height") != 0:
-        err(
-            f"{rel}: half_height must be 0 — a deeper disk digs a basin that can breach a rim"
-        )
-    r = cfg.get("radius", {})
-    if r.get("type") != "minecraft:uniform":
-        err(f"{rel}: radius should be minecraft:uniform")
-        return -1
-    lo, hi = r.get("min_inclusive"), r.get("max_inclusive")
-    if not (isinstance(lo, int) and isinstance(hi, int) and 0 <= lo <= hi <= 8):
-        err(f"{rel}: radius out of the codec range 0..8: {lo}..{hi}")
-        return -1
-    tgt = cfg.get("target", {})
-    if tgt.get("type") != "minecraft:matching_blocks":
-        err(f"{rel}: target should be minecraft:matching_blocks")
-    blocks = tgt.get("blocks")
-    # A vanilla HolderSet is either one "#tag" string or a list of plain ids — never a
-    # mixed list. Tags keep the target broad enough to actually be reachable (measured
-    # against a generated world: 65% of solid columns for water, 12% for lava).
-    if not isinstance(blocks, str) or not blocks.startswith("#"):
-        err(f"{rel}: target.blocks should be a single '#tag' string, got {blocks!r}")
-    elif blocks.startswith("#sky_world:"):
-        name = blocks.split(":", 1)[1]
-        if not (RES / f"data/sky_world/tags/block/{name}.json").exists():
-            err(
-                f"{rel}: target.blocks references {blocks} but no such tag file exists "
-                f"(expected data/sky_world/tags/block/{name}.json — note 1.21 uses the "
-                "singular 'tags/block' directory)"
-            )
-    return hi
+    if set(cfg) != {"barrier", "fluid"}:
+        err(f"{rel}: config fields {sorted(cfg)} != ['barrier', 'fluid']")
+    for key in ("barrier", "fluid"):
+        prov = cfg.get(key, {})
+        if prov.get("type") != "minecraft:simple_state_provider":
+            err(f"{rel}: {key} should be a minecraft:simple_state_provider")
+    fluid_state = cfg.get("fluid", {}).get("state", {})
+    if fluid_state.get("Properties", {}).get("level") != "0":
+        err(f"{rel}: fluid must be a source block (level 0), not flowing")
+    # barrier is what walls the basin. Without it the lake is a hole full of water whose
+    # sides are whatever the terrain happened to be — the "edge isn't enclosed" symptom.
+    if not cfg.get("barrier", {}).get("state", {}).get("Name"):
+        err(f"{rel}: barrier has no block — the basin would have no lining")
 
 
-def check_placed(rel: str, feature: str, disk_radius: int) -> None:
+def check_lake_placed(rel: str, feature: str) -> None:
     obj = load(rel)
     if obj is None:
         return
@@ -200,128 +123,38 @@ def check_placed(rel: str, feature: str, disk_radius: int) -> None:
         err(f"{rel}: feature must be {feature}")
     mods = obj.get("placement", [])
     types = [m.get("type") for m in mods]
-    if "isekai_api:slope_filter" not in types:
+
+    # Vanilla's lake_lava_surface placement, verbatim except for the chance. Anything
+    # extra is a knob that was added by feel rather than copied from a working example.
+    expected = [
+        "minecraft:rarity_filter",
+        "minecraft:in_square",
+        "minecraft:heightmap",
+        "minecraft:biome",
+    ]
+    if types != expected:
         err(
-            f"{rel}: no isekai_api:slope_filter — a pond may land on a cliff lip and spill"
+            f"{rel}: placement is {types}, expected vanilla lake_lava_surface's shape "
+            f"{expected}. LakeFeature does its own siting check; a slope filter or an "
+            f"offset on top of it is redundant at best"
         )
-    # in_square must precede slope_filter: the filter samples the heightmap at the final x/z.
-    if "minecraft:in_square" in types and types.index(
-        "minecraft:in_square"
-    ) > types.index("isekai_api:slope_filter"):
-        err(f"{rel}: minecraft:in_square must come before isekai_api:slope_filter")
-    for m in mods:
-        t = m.get("type")
-        if t == "minecraft:count":
-            c = m.get("count")
-            lo_hi = (
-                (c, c)
-                if isinstance(c, int)
-                else (
-                    (c.get("min_inclusive"), c.get("max_inclusive"))
-                    if isinstance(c, dict)
-                    else (None, None)
-                )
-            )
-            if not all(isinstance(v, int) and 0 <= v <= 256 for v in lo_hi):
-                err(f"{rel}: count {c!r} outside the codec range 0..256")
-        elif t == "minecraft:random_offset":
-            for k in ("xz_spread", "y_spread"):
-                v = m.get(k)
-                if not (isinstance(v, int) and -16 <= v <= 16):
-                    err(f"{rel}: random_offset.{k} {v!r} outside -16..16")
-            # The two shapes anchor differently and the offset has to match, or the
-            # feature works one block off. minecraft:disk paints the block it is given,
-            # so it needs -1 to reach the surface block itself. isekai_api:pool takes
-            # the air cell above the surface as its origin and digs down from there
-            # (PoolFeature.place: "origin = air cell above the top solid block"), so
-            # shifting it down would sink the whole basin.
-            want = 0 if FORM.get(rel) == "pool" else -1
-            if m.get("y_spread") != want:
-                err(
-                    f"{rel}: y_spread must be {want} for a "
-                    f"{FORM.get(rel, 'disk')} feature"
-                )
-        elif t == "minecraft:heightmap":
-            if m.get("heightmap") not in HEIGHTMAPS:
-                err(f"{rel}: unknown heightmap {m.get('heightmap')!r}")
-        elif t == "isekai_api:slope_filter":
-            if set(m) - {
-                "type",
-                "min_slope",
-                "max_slope",
-                "sample_radius",
-                "heightmap",
-            }:
-                err(
-                    f"{rel}: slope_filter has fields outside SlopeFilterModifier.CODEC: {sorted(m)}"
-                )
-            sr = m.get("sample_radius", 2)
-            if not (isinstance(sr, int) and 1 <= sr <= 8):
-                err(f"{rel}: sample_radius {sr!r} outside the codec range 1..8")
-            for k in ("min_slope", "max_slope"):
-                v = m.get(k)
-                if v is not None and not (
-                    isinstance(v, (int, float)) and 0.0 <= v <= 1.0
-                ):
-                    err(f"{rel}: {k} {v!r} outside 0.0..1.0")
-            if m.get("heightmap") not in HEIGHTMAPS:
-                err(f"{rel}: slope_filter heightmap {m.get('heightmap')!r} unknown")
-            # The spill invariant: the flatness test must reach further than the pond does.
-            if disk_radius >= 0 and sr <= disk_radius:
-                err(
-                    f"{rel}: sample_radius ({sr}) must exceed the disk radius ({disk_radius}) — "
-                    "otherwise the filter can pass a spot whose pond still touches the rim"
-                )
-            # slope = min(1, maxDelta / sample_radius); state the block delta this admits.
-            ms = m.get("max_slope", 1.0)
-            notes.append(
-                f"{rel}: slope_filter admits a height delta of at most "
-                f"{int(ms * sr)} block(s) at +-{sr} on each cardinal axis"
-            )
-        elif t == "minecraft:rarity_filter":
-            # Density is the whole difference between "a pond" and "a rash of ponds".
-            # minecraft:count fires every chunk; rarity_filter fires in one chunk of
-            # `chance`. Anything denser than one chunk in four covers the ground.
-            c = m.get("chance")
-            if set(m) != {"type", "chance"}:
-                err(f"{rel}: rarity_filter takes only 'chance'")
-            if not (isinstance(c, int) and c >= 1):
-                err(f"{rel}: rarity_filter chance must be a positive int")
-            elif c < VANILLA_SURFACE_LAKE_RARITY // NO_OCEAN_DENSITY_FACTOR:
-                # Anchor, not taste: vanilla's own visible surface water
-                # (minecraft:lake_lava_surface) is one chunk in 200. Islands cover a
-                # fraction of the chunks here so some multiple of that is defensible,
-                # but an order of magnitude denser is a rash, not a landscape.
-                err(
-                    f"{rel}: rarity_filter chance {c} — vanilla puts visible surface "
-                    f"water at 1/{VANILLA_SURFACE_LAKE_RARITY}; even allowing "
-                    f"{NO_OCEAN_DENSITY_FACTOR}x for having no ocean, {c} is too dense"
-                )
-            else:
-                notes.append(f"{rel}: one attempt per {c} chunks")
-            seen_rarity.add(rel)
-        elif t == "minecraft:count":
-            # count multiplies whatever reached it. Ahead of a rarity_filter it is the
-            # density driver and fires every chunk; behind one it is how a single
-            # already-rare site gets several overlapping discs, which is what stops
-            # the pool from reading as a mathematical circle.
-            if rel not in seen_rarity:
-                err(
-                    f"{rel}: minecraft:count fires in every chunk — put a "
-                    "minecraft:rarity_filter ahead of it"
-                )
-            else:
-                cnt = m.get("count")
-                hi = cnt.get("max_inclusive") if isinstance(cnt, dict) else cnt
-                if isinstance(hi, int) and hi > 4:
-                    err(f"{rel}: count max {hi} per site is a cluster, not a pond")
-                else:
-                    notes.append(f"{rel}: {cnt} overlapping discs per site")
-        elif t in ("minecraft:in_square", "minecraft:biome"):
-            if set(m) != {"type"}:
-                err(f"{rel}: {t} takes no fields")
-        else:
-            err(f"{rel}: unreviewed placement modifier {t!r}")
+        return
+
+    chance = mods[0].get("chance")
+    floor = VANILLA_SURFACE_LAKE_RARITY // NO_OCEAN_DENSITY_FACTOR
+    if not (isinstance(chance, int) and chance >= 1):
+        err(f"{rel}: rarity_filter chance must be a positive int")
+    elif chance < floor:
+        err(
+            f"{rel}: rarity_filter chance {chance} — vanilla puts visible surface water "
+            f"at 1/{VANILLA_SURFACE_LAKE_RARITY}; even allowing "
+            f"{NO_OCEAN_DENSITY_FACTOR}x for having no ocean, {chance} is too dense"
+        )
+    else:
+        notes.append(f"{rel}: one attempt per {chance} chunks")
+
+    if mods[2].get("heightmap") not in HEIGHTMAPS:
+        err(f"{rel}: unknown heightmap {mods[2].get('heightmap')!r}")
 
 
 def descriptors(node):
@@ -336,7 +169,10 @@ def descriptors(node):
             yield from descriptors(v)
 
 
-def check_worldshapes() -> None:
+def check_exclusions() -> None:
+    """Every leaking feature excluded in every descriptor, and the comparison datapacks
+    kept in step with the shipping one — a pack that only changes sky colour must not
+    quietly change fluid behaviour too."""
     files = [
         "data/sky_world/isekai/worldshape/sky.json",
         "datapacks/skycolor_b/data/sky_world/isekai/worldshape/sky_b.json",
@@ -349,102 +185,71 @@ def check_worldshapes() -> None:
         found = list(descriptors(obj))
         if not found:
             err(f"{rel}: no worldshape descriptor found")
-        for i, d in enumerate(found):
-            where = f"{rel}[descriptor {i}]"
-            excl = d.get("exclusions", {}).get("features", [])
-            for k in LEAKING:
-                if k not in excl:
-                    err(f"{where}: exclusions.features is missing {k}")
-            if "additions" in d:
+            continue
+        for i, desc in enumerate(found):
+            feats = desc.get("exclusions", {}).get("features", [])
+            for leak in LEAKING:
+                if leak not in feats:
+                    err(f"{rel} [descriptor {i}]: {leak} is not excluded")
+            if "minecraft:lake_lava_surface" in feats:
                 err(
-                    f"{where}: ponds are injected by the neoforge:add_features biome modifier, "
-                    "not by worldshape additions — two paths would place every pond twice"
+                    f"{rel} [descriptor {i}]: lake_lava_surface is excluded, but "
+                    "LakeFeature declines unsuitable sites on its own — excluding it "
+                    "removes surface lava for no reason"
                 )
 
 
-def check_biome_modifier() -> None:
-    """The ponds are injected by NeoForge's own biome modifier, not by the worldshape.
-
-    Isekai's additions path needs a live server context at modify time; the NeoForge modifier
-    has no such dependency, and E2 (a reachable water source) must not hinge on that timing.
-    One file also beats six descriptor copies across the two comparison datapacks.
+def check_overrides() -> None:
+    """The data/minecraft neutralisations. count:0 also strips the HeightRangePlacement,
+    which is what kept these out of the ore-remap ADD phase before isekai_api 2.1.0
+    fixed the re-injection. Keeping it costs nothing and survives a library downgrade.
     """
-    rel = "data/sky_world/neoforge/biome_modifier/add_ponds.json"
-    obj = load(rel)
-    if obj is None:
-        return
-    if obj.get("type") != "neoforge:add_features":
-        err(f"{rel}: type must be neoforge:add_features")
-    if obj.get("biomes") != "#minecraft:is_overworld":
-        err(
-            f"{rel}: biomes must be #minecraft:is_overworld to match the worldshape's applies_to"
-        )
-    feats = obj.get("features", [])
-    for p in PONDS:
-        if p not in feats:
-            err(f"{rel}: features is missing {p}")
-    if obj.get("step") != "lakes":
-        err(
-            f"{rel}: step is {obj.get('step')!r}; must be 'lakes' so vegetation generates after "
-            "the water and never floats over it"
-        )
-
-
-def check_neutralised() -> None:
-    for key in LEAKING:
-        name = key.split(":", 1)[1]
+    for leak in LEAKING:
+        name = leak.split(":", 1)[1]
         rel = f"data/minecraft/worldgen/placed_feature/{name}.json"
         obj = load(rel)
         if obj is None:
             continue
         mods = obj.get("placement", [])
-        if (
-            len(mods) != 1
-            or mods[0].get("type") != "minecraft:count"
-            or mods[0].get("count") != 0
-        ):
-            err(f"{rel}: must be exactly one minecraft:count with count 0")
-        if "HeightRangePlacement" in json.dumps(obj) or any(
-            m.get("type") == "minecraft:height_range" for m in mods
-        ):
-            err(
-                f"{rel}: must not carry a height_range — that is what makes Isekai's ADD phase "
-                "rebuild and re-inject it"
-            )
+        if len(mods) != 1 or mods[0].get("type") != "minecraft:count":
+            err(f"{rel}: override should be a single minecraft:count")
+            continue
+        if mods[0].get("count") != 0:
+            err(f"{rel}: count must be 0 to neutralise the feature")
+    stray = RES / "data/minecraft/worldgen/placed_feature/lake_lava_surface.json"
+    if stray.exists():
+        err(
+            "data/minecraft/worldgen/placed_feature/lake_lava_surface.json still "
+            "overrides vanilla — surface lava lakes are wanted now"
+        )
 
 
-def check_cloud_above_bands() -> None:
-    """The cloud plane must clear the highest island band.
-
-    Vanilla's 192 cut through the middle band, which is the defect this replaces. The band
-    ceilings live in the noise settings and are edited independently of the client class, so
-    assert the coupling here rather than discovering it in a screenshot.
-    """
-    java = (
-        ROOT
-        / "src/main/java/com/kuronami/skyworld/client/SkyWorldDimensionEffects.java"
-    )
-    if not java.exists():
-        err("missing SkyWorldDimensionEffects.java")
+def check_cloud() -> None:
+    """The cloud plane has to clear the top island band, or the sheet cuts through rock."""
+    # Search the client package rather than a fixed file: the constant moved once
+    # already, and a checker that silently stops finding it is worse than none.
+    hits = [
+        (f, m)
+        for f in (ROOT / "src/main/java").rglob("*.java")
+        for m in [re.search(r"CLOUD_LEVEL\s*=\s*([0-9.]+)F", f.read_text(encoding="utf-8"))]
+        if m
+    ]
+    if len(hits) != 1:
+        err(f"expected exactly one CLOUD_LEVEL constant, found {len(hits)}")
         return
-    m = re.search(r"CLOUD_LEVEL\s*=\s*([0-9.]+)F", java.read_text(encoding="utf-8"))
-    if not m:
-        err("SkyWorldDimensionEffects: could not read CLOUD_LEVEL")
-        return
+    m = hits[0][1]
     cloud = float(m.group(1))
     ns = load("data/minecraft/worldgen/noise_settings/overworld.json")
     if ns is None:
         return
-    tops = [int(v) for v in re.findall(r'"active_max_y":\s*(-?\d+)', json.dumps(ns))]
+    tops = [int(x) for x in re.findall(r'"active_max_y":\s*(-?\d+)', json.dumps(ns))]
     if not tops:
-        err(
-            "noise_settings/overworld.json: no active_max_y found — band layout changed shape"
-        )
+        err("overworld.json: no band_density active_max_y found")
         return
     top = max(tops)
     if cloud <= top:
         err(
-            f"CLOUD_LEVEL {cloud} is not above the top island band ceiling {top} — "
+            f"CLOUD_LEVEL {cloud:.0f} is not above the top island band ceiling {top} — "
             "the cloud sheet will cut through island rock again"
         )
     else:
@@ -455,33 +260,20 @@ def check_cloud_above_bands() -> None:
 
 
 def main() -> int:
-    cf = "data/sky_world/worldgen/configured_feature/{}.json"
-    pf = "data/sky_world/worldgen/placed_feature/{}.json"
-    rw = check_disk("data/sky_world/worldgen/configured_feature/pond_water.json")
-    rl = check_disk("data/sky_world/worldgen/configured_feature/pond_lava.json")
-    for n in ("pond_water", "pond_lava"):
-        FORM[pf.format(n)] = FORM.get(cf.format(n), "disk")
-    check_placed(
-        "data/sky_world/worldgen/placed_feature/pond_water.json",
-        "sky_world:pond_water",
-        rw,
+    check_lake_configured("data/sky_world/worldgen/configured_feature/lake_water.json")
+    check_lake_placed(
+        "data/sky_world/worldgen/placed_feature/lake_water.json", "sky_world:lake_water"
     )
-    check_placed(
-        "data/sky_world/worldgen/placed_feature/pond_lava.json",
-        "sky_world:pond_lava",
-        rl,
-    )
-    check_worldshapes()
-    check_biome_modifier()
-    check_cloud_above_bands()
-    check_neutralised()
+    check_exclusions()
+    check_overrides()
+    check_cloud()
 
     for n in notes:
-        print("note: " + n)
+        print("note:", n)
     if errors:
-        print(f"\nFAIL ({len(errors)}):")
+        print(f"\nFAIL ({len(errors)})")
         for e in errors:
-            print("  - " + e)
+            print("  -", e)
         return 1
     print(
         "\nOK: fluid policy consistent across worldshape, comparison packs and vanilla overrides"
