@@ -2,7 +2,7 @@
   "type": "neoforge:add_features",
   "biomes": "#minecraft:is_overworld",
   "features": [
-    "sky_world:lake_water"
+    "sky_world:pond_water"
   ],
   "step": "lakes"
 }

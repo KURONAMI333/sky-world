@@ -25,10 +25,16 @@ repeat them:
    it declines to generate on a thin rim rather than leaking over it.
 3. Density is measured against vanilla, not chosen by feel. `lake_lava_surface` is the
    only vanilla feature that puts fluid on the open surface, at one chunk in 200.
-4. Custom fluid primitives are a smell. Sky World used `isekai_api:pool` for a while and
-   got a mathematically round, unenclosed puddle; vanilla's lake gets an irregular,
-   walled one out of the box. If a fluid feature here is not `minecraft:lake`, that is a
-   decision that needs stating, not a default to drift into.
+4. Water is the one place a custom feature is right, and the reason is specific: vanilla
+   1.21.1 ships exactly one `minecraft:lake` configured feature (`lake_lava`), and its
+   water branch — the ice-capping pass at LakeFeature:133-144 — calls `getBiome()` up to
+   15 blocks out and throws "Requested chunk unavailable during world generation". It has
+   been dead code since water lakes left worldgen in 1.18. So lava uses vanilla's
+   `lake_lava_surface` untouched, and water uses `isekai_api:pool`, which ports
+   LakeFeature's three good ideas (solidity test before any write, barrier lining,
+   ellipsoid-union outline) without the ice pass. A custom primitive that is NOT carrying
+   that justification is a smell — the first version of pool had none of the three and
+   produced a round, unenclosed puddle that took six rounds to get rejected out of.
 """
 
 from __future__ import annotations
@@ -85,37 +91,46 @@ def load(rel: str):
         return None
 
 
-def check_lake_configured(rel: str) -> None:
-    """The water lake. Vanilla ships no surface water lake in 1.21, so this is the one
-    fluid feature Sky World defines itself — and it is vanilla's own feature type with a
-    different fluid, not a new primitive."""
+def check_water_configured(rel: str) -> None:
+    """Water uses isekai_api:pool — see this file's header for why not minecraft:lake."""
     obj = load(rel)
     if obj is None:
         return
-    if obj.get("type") != "minecraft:lake":
-        err(
-            f"{rel}: type is {obj.get('type')!r}, not minecraft:lake. A custom fluid "
-            "feature has to justify itself against LakeFeature's shell-solidity test — "
-            "see this file's header"
-        )
+    if obj.get("type") == "minecraft:lake":
+        fluid = json.dumps(obj.get("config", {}).get("fluid", {}))
+        if "water" in fluid:
+            err(
+                f"{rel}: minecraft:lake with water crashes worldgen "
+                "(LakeFeature:133-144 calls getBiome on a neighbouring chunk). "
+                "Use isekai_api:pool"
+            )
+            return
+    if obj.get("type") != "isekai_api:pool":
+        err(f"{rel}: type is {obj.get('type')!r}, expected isekai_api:pool")
         return
     cfg = obj.get("config", {})
-    if set(cfg) != {"barrier", "fluid"}:
-        err(f"{rel}: config fields {sorted(cfg)} != ['barrier', 'fluid']")
-    for key in ("barrier", "fluid"):
-        prov = cfg.get(key, {})
-        if prov.get("type") != "minecraft:simple_state_provider":
-            err(f"{rel}: {key} should be a minecraft:simple_state_provider")
-    fluid_state = cfg.get("fluid", {}).get("state", {})
-    if fluid_state.get("Properties", {}).get("level") != "0":
+    if not set(cfg) <= {"fluid", "rim_block", "xz_radius", "depth"}:
+        err(f"{rel}: unexpected config fields {sorted(cfg)}")
+    if cfg.get("fluid", {}).get("Properties", {}).get("level") != "0":
         err(f"{rel}: fluid must be a source block (level 0), not flowing")
-    # barrier is what walls the basin. Without it the lake is a hole full of water whose
-    # sides are whatever the terrain happened to be — the "edge isn't enclosed" symptom.
-    if not cfg.get("barrier", {}).get("state", {}).get("Name"):
-        err(f"{rel}: barrier has no block — the basin would have no lining")
+    # rim_block lines the whole shell, not just the floor — that lining is what closes
+    # the edge. Without it the basin's sides are whatever the terrain happened to be.
+    if not cfg.get("rim_block", {}).get("state", {}).get("Name"):
+        err(f"{rel}: rim_block has no block — the basin would have no lining")
+    r = cfg.get("xz_radius", {})
+    if "value" in r:
+        err(f"{rel}: xz_radius has a 'value' wrapper — IntProvider dispatch is inline")
+        return
+    lo, hi = r.get("min_inclusive"), r.get("max_inclusive")
+    if not (isinstance(lo, int) and isinstance(hi, int) and lo < hi):
+        err(f"{rel}: xz_radius should be a uniform range with lo < hi, got {lo}..{hi}")
+    elif hi > 8:
+        # Measured: placement success falls ~3x from r=2 to r=5 on rolling terrain,
+        # because a wider footprint has more chances to meet a cell that cannot hold.
+        err(f"{rel}: xz_radius max {hi} is wide enough that most sites will reject it")
 
 
-def check_lake_placed(rel: str, feature: str) -> None:
+def check_water_placed(rel: str, feature: str) -> None:
     obj = load(rel)
     if obj is None:
         return
@@ -260,9 +275,9 @@ def check_cloud() -> None:
 
 
 def main() -> int:
-    check_lake_configured("data/sky_world/worldgen/configured_feature/lake_water.json")
-    check_lake_placed(
-        "data/sky_world/worldgen/placed_feature/lake_water.json", "sky_world:lake_water"
+    check_water_configured("data/sky_world/worldgen/configured_feature/pond_water.json")
+    check_water_placed(
+        "data/sky_world/worldgen/placed_feature/pond_water.json", "sky_world:pond_water"
     )
     check_exclusions()
     check_overrides()
