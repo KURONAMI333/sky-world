@@ -203,14 +203,13 @@ def descriptors(node):
 
 
 def check_exclusions() -> None:
-    """Every leaking feature excluded in every descriptor, and the comparison datapacks
-    kept in step with the shipping one — a pack that only changes sky colour must not
-    quietly change fluid behaviour too."""
-    files = [
-        "data/sky_world/isekai/worldshape/sky.json",
-        "datapacks/skycolor_b/data/sky_world/isekai/worldshape/sky_b.json",
-        "datapacks/skycolor_c/data/sky_world/isekai/layered_worldshape/sky_c.json",
-    ]
+    """Every leaking feature excluded in every worldshape descriptor."""
+    # Was three: the shipping worldshape plus two sky-colour comparison packs that only
+    # existed so kura could switch colours inside one client launch. Option A (leave
+    # sky_color unwritten, keep vanilla's per-biome sky) won, so the packs are gone. If a
+    # comparison pack ever comes back, add it here — a pack that changes only colour must
+    # not quietly change fluid behaviour too.
+    files = ["data/sky_world/isekai/worldshape/sky.json"]
     for rel in files:
         obj = load(rel)
         if obj is None:
@@ -309,7 +308,7 @@ def main() -> int:
             print("  -", e)
         return 1
     print(
-        "\nOK: fluid policy consistent across worldshape, comparison packs and vanilla overrides"
+        "\nOK: fluid policy consistent across worldshape and vanilla overrides"
     )
     return 0
 
