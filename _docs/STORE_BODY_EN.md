@@ -12,7 +12,9 @@ Between the bands is empty air, so the layers read as separate levels of the wor
 
 ## What moved
 
-Ores follow each island's own top and bottom instead of absolute depth, so coal sits just under the grass of whatever island you are standing on and diamond sits near its underside. Structures and mobs are placed against the island volume the same way. Nothing generates at the old Y values, because there is nothing there.
+Ores follow each island's own top and bottom instead of absolute depth, so coal sits just under the grass of whatever island you are standing on and diamond sits near its underside. Where islands stack, each one is filled on its own terms, so the island under the one you landed on is not hollow. Structures and mobs are placed against the island volume the same way. Nothing generates at the old Y values, because there is nothing there.
+
+About twelve blocks under an island's surface the stone turns to deepslate, so the deepslate ores are here too.
 
 There is no ocean. Water comes from ponds dug into the islands, roughly one attempt per twelve chunks, and surface lava lakes appear at vanilla's own rate. That is the whole water supply, so a pond is worth remembering where it is.
 
