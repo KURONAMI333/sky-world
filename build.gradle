@@ -72,12 +72,8 @@ dependencies {
     // Isekai API consumer dependency. compileOnly for the API surface;
     // localRuntime drops the jar into the dev runtime so runClient/runServer load it
     // as a regular NeoForge mod (it has its own neoforge.mods.toml).
-    //
-    // 2.1.0 is not on the raw-URL maven yet, so resolve it from the sibling checkout.
-    // Swap both lines back to the "com.kuronami.isekaiapi:isekai_api:${isekai_api_version}"
-    // coordinate once that version is published.
-    compileOnly files("../mod-029-isekai-api/build/libs/isekai_api-${isekai_api_version}.jar")
-    localRuntime files("../mod-029-isekai-api/build/libs/isekai_api-${isekai_api_version}.jar")
+    compileOnly "com.kuronami.isekaiapi:isekai_api:${isekai_api_version}"
+    localRuntime "com.kuronami.isekaiapi:isekai_api:${isekai_api_version}"
 
     testImplementation platform('org.junit:junit-bom:5.10.2')
     testImplementation 'org.junit.jupiter:junit-jupiter'
