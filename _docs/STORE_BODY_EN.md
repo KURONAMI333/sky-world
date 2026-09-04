@@ -22,8 +22,8 @@ Clouds sit above the top band rather than cutting through it.
 
 Sky Realm, the separate dimension in 1.0.0, is gone. It had no way in — no portal was ever implemented — and its terrain was a copy of the overworld's.
 
-Server-side world generation, with one client-side class that raises the cloud plane.
-
 Requires [Isekai API](https://modrinth.com/mod/isekai-api) 2.1.0 or newer.
 
-Free to use in any modpack, public or private.
+All Rights Reserved. Modpack inclusion is allowed without permission or credit.
+
+[Source](https://github.com/KURONAMI333/sky-world) · [Issues](https://github.com/KURONAMI333/sky-world/issues)
