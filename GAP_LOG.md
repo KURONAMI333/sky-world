@@ -62,3 +62,25 @@ coal_upper / iron_upper まで含めるか。B は全部直すが、薄い島の
 - **島の下面が板**（Wave1.5-A の revert で戻った唯一の未解決点）。1軸ずつ動かして毎回実機で見る
 - 空の色が未確定（案A=vanilla のままが既定。B/C は同梱 datapack で比較可能）
 - old_blended_noise の振幅がシード依存で、層の密度順序が6シード中1つで反転する（未裁定・11本に効く）
+
+## 2026-09-04 issue #2（石バリアントが出ない）の決着
+
+### 真因と解消
+
+`ore_andesite_lower`（Y0..60・count 2）は既定値でも正しく Y54..77 に解決していて、供給は `_upper`（rarity 1/6）の 12 倍ある。issue #2 の残りの原因は**参照列が列の最上位の島しか見ていなかったこと**で、isekai-api `35f020b` で解消した（同一計測で下段 Y32..111 の andesite が 0→7,697、中段の「上に島あり/なし」の密度差が 36倍→1.07倍）。
+
+先に入れた `5b6d5ff`（幅ゼロ帯を胴体へクランプ＋WARN）が効いたのは石炭（89%→98%）と鉄（35%→41%）で、石バリアントには効いていない。
+
+計測器は `tools/probe_sky_ores.py`（RCON block-probe・`--expect-rock` の陽性対照つき）と `tools/analyze_sky_probe.py`。**バニラ基準の計測に mod-029 の runServer は使えない**（dev 専用で overworld を空にする上書きを持つので全部0を引く）。
+
+### ジオードの記述が実体と食い違っていた
+
+上の「アメジストジオードが消えたか — 除外で対応」は誤り。**実体は `exclusions` ではなく `rarity_filter` の 24→160 への上書き**。
+
+**`35f020b` はこの調整の効き目を落とす。** `ore_strategy` は height_range を持つ全 feature を掃引するので、ジオードも列の島の数だけ出現機会が増える。kura が裁定した「頻度が多すぎる」への対応が、別の修正のついでに薄まる形になっている（[[feedback_approved_surface_freeze]] の型）。**公開前に修正前の露出へ戻す。**
+
+### 未決のまま残すもの
+
+- `sky.json` の参照列（`surface_y`/`floor_y`）。`35f020b` 後の全域で andesite がバニラ比 102%・granite 167% と過供給側に振れている。候補2つと分岐点は上の 2026-09-04 の節
+- 深層岩を島に出す（kura 裁定 2026-09-04「出したほうが良いでしょ」）。機構は `isekai_api:strata` で API 拡張は不要。深さ N は未確定
+- `WorldSurface.resolveYBelow` の終端走査コスト（`minBuildHeight` まで降りる分）。未測定
