@@ -64,6 +64,7 @@ class Rcon:
     def __init__(self, host: str, port: int, password: str) -> None:
         self.sock = socket.create_connection((host, port), timeout=300)
         self.req_id = 0
+        self.stale_packets = 0
         if self._send(3, password) is None:
             raise SystemExit("RCON auth failed")
 
@@ -76,12 +77,17 @@ class Rcon:
             + b"\x00\x00"
         )
         self.sock.sendall(struct.pack("<i", len(payload)) + payload)
-        length = struct.unpack("<i", self._recv_exact(4))[0]
-        resp_id, _ = struct.unpack("<ii", self._recv_exact(8))
-        text = self._recv_exact(length - 8)[:-2].decode("utf-8", "replace")
-        if resp_id != sent_id:
-            return None
-        return text
+        # サーバが遅れていると応答が1つずれることがある（実測 2026-09-04）。ずれたまま
+        # 読み続けると次のコマンドの応答を空の返事として受け取り、「0 個」と「検査が
+        # 壊れた」の区別がつかなくなる。id が合うまで読み捨てて同期を取り直す。
+        for _ in range(8):
+            length = struct.unpack("<i", self._recv_exact(4))[0]
+            resp_id, _ = struct.unpack("<ii", self._recv_exact(8))
+            text = self._recv_exact(length - 8)[:-2].decode("utf-8", "replace")
+            if resp_id == sent_id:
+                return text
+            self.stale_packets += 1
+        return None
 
     def _recv_exact(self, n: int) -> bytes:
         buf = b""
@@ -144,6 +150,23 @@ def wait_all_loaded(
         )
 
 
+def settle(rcon: "Rcon", quiet_needed: int = 5, timeout: float = 120.0) -> None:
+    """生成直後のティック遅れが引くまで待つ。
+
+    forceload 直後のサーバは数秒ぶん遅れており、その間は応答がずれることがある
+    （実測 2026-09-04: 遅れの警告の直後に fill の応答が1つずれた）。安い問い合わせが
+    連続で速く返るようになってから計数を始める。
+    """
+    deadline = time.time() + timeout
+    quiet = 0
+    while quiet < quiet_needed and time.time() < deadline:
+        t0 = time.time()
+        ok = "The time is" in rcon.cmd("time query gametime")
+        quiet = quiet + 1 if ok and time.time() - t0 < 0.25 else 0
+        if quiet < quiet_needed:
+            time.sleep(0.5)
+
+
 def parse_bands(text: str) -> list[tuple[int, int]]:
     out = []
     for part in text.split(","):
@@ -200,6 +223,7 @@ def main() -> int:
     rcon.cmd(f"forceload add {x0b} {z0b} {x1b} {z1b}")
     probe_y = bands[0][0]
     wait_all_loaded(rcon, cells, probe_y)
+    settle(rcon)
     print(f"[{args.label}] {len(cells)} chunks generated, probing...")
 
     # Y スライス（下から上へ。上を先に air にすると落下ブロックが下を汚す）
@@ -243,7 +267,11 @@ def main() -> int:
             )
 
     rcon.cmd(f"forceload remove {x0b} {z0b} {x1b} {z1b}")
+    stale = rcon.stale_packets
     rcon.close()
+    if stale:
+        print()
+        print(f"[warn] RCON の応答が {stale} 回ずれた")
 
     total_rock = sum(
         v
