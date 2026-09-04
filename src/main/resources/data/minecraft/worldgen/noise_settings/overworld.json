@@ -77,6 +77,23 @@
         "type": "isekai_api:vanilla_overworld_surface"
       },
       {
+        "type": "isekai_api:strata",
+        "bands": [
+          {
+            "block": {
+              "Name": "minecraft:stone"
+            },
+            "thickness": 12
+          },
+          {
+            "block": {
+              "Name": "minecraft:deepslate"
+            },
+            "thickness": 64
+          }
+        ]
+      },
+      {
         "type": "isekai_api:worldshape_default_block",
         "dimension": "minecraft:overworld"
       }
