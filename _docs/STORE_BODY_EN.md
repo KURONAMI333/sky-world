@@ -24,7 +24,7 @@ Clouds sit above the top band rather than cutting through it.
 
 Sky Realm, the separate dimension in 1.0.0, is gone. It had no way in — no portal was ever implemented — and its terrain was a copy of the overworld's.
 
-Requires [Isekai API](https://modrinth.com/mod/isekai-api) 2.1.0 or newer.
+Requires [Isekai API](https://modrinth.com/mod/isekai-api) 2.2.0 or newer.
 
 All Rights Reserved. Modpack inclusion is allowed without permission or credit.
 
