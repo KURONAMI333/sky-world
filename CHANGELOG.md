@@ -4,6 +4,24 @@ All notable changes to Sky World follow this file. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/); versions before 1.0.0 were
 development-only and not released.
 
+## [2.1.0]
+
+Requires Isekai API 2.2.0.
+
+### Fixed
+- Islands below the topmost one in a column now get ore and stone variants
+  too. `ore_strategy` previously resolved only against the highest island in
+  a stacked column, so anything floating above a lower island left it with no
+  ore at all.
+- Amethyst geode exposure is back to its previous level. Isekai API 2.2.0's
+  fix above increased geode exposure 1.797x as a side effect; `rarity_filter`
+  is retuned (160 → 288) to cancel it out.
+
+### Added
+- Below island depth 12, stone turns to deepslate variants
+  (`isekai_api:strata`) — deepslate ores generate there instead of the
+  regular ones.
+
 ## [2.0.0] — 2026-08-08
 
 Requires Isekai API 2.1.0. **World-generation change: existing worlds keep their
