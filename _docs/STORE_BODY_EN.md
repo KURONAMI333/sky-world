@@ -28,4 +28,6 @@ Requires [Isekai API](https://modrinth.com/mod/isekai-api) 2.2.0 or newer.
 
 All Rights Reserved. Modpack inclusion is allowed without permission or credit.
 
-[Source](https://github.com/KURONAMI333/sky-world) · [Issues](https://github.com/KURONAMI333/sky-world/issues)
+Bugs and questions: comment on the CurseForge page, or DM @kuronami333 on X.
+
+[Source](https://github.com/KURONAMI333/sky-world)
