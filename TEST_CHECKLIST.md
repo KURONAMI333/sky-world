@@ -102,6 +102,6 @@ Mine through an island — expect to find:
 
 ## If something fails
 
-- Reload failed → check `run/logs/latest.log` for stack trace, share with claude
+- Reload failed → check `run/logs/latest.log` for stack trace, and keep it with the report
 - Terrain looks like vanilla → `noise_settings/overworld.json` overlay didn't apply (verify the file exists in `build/resources/main/data/minecraft/worldgen/noise_settings/overworld.json`)
 - `/isekai stats` shows `Declared worldshape dimensions: 0` → the biome_modifier's worldshape didn't reach IsekaiRemap singleton; this is by design (biome modifiers go through NeoForge registry, not the Java API). Still functions for chunk-gen.
