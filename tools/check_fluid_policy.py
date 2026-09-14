@@ -205,7 +205,7 @@ def descriptors(node):
 def check_exclusions() -> None:
     """Every leaking feature excluded in every worldshape descriptor."""
     # Was three: the shipping worldshape plus two sky-colour comparison packs that only
-    # existed so KURONAMI333 could switch colours inside one client launch. Option A (leave
+    # existed so design review could switch colours inside one client launch. Option A (leave
     # sky_color unwritten, keep vanilla's per-biome sky) won, so the packs are gone. If a
     # comparison pack ever comes back, add it here — a pack that changes only colour must
     # not quietly change fluid behaviour too.

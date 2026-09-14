@@ -44,7 +44,7 @@ Same Isekai primitives any third-party modder gets — Sky World is just one app
 ## Dependencies
 
 - NeoForge 1.21.1
-- [Isekai API 2.1.0+](https://github.com/KURONAMI333/isekai-api) (required)
+- [Isekai API 2.2.0+ (below 3.0.0)](https://github.com/KURONAMI333/isekai-api) (required)
 
 ## Building from source
 
@@ -52,7 +52,7 @@ Same Isekai primitives any third-party modder gets — Sky World is just one app
 ./gradlew build
 ```
 
-Produces `build/libs/sky_world-2.0.0.jar`.
+Produces `build/libs/sky_world-<version>.jar`.
 
 ## Compatibility
 
@@ -71,3 +71,11 @@ Because Sky World overlays `data/minecraft/worldgen/noise_settings/overworld.jso
 
 - Author: KURONAMI
 - Built on [Isekai API](https://github.com/KURONAMI333/isekai-api)
+
+## Downloads and support
+
+Downloads: [CurseForge](https://www.curseforge.com/minecraft/mc-mods/sky-world) · [GitHub Releases](https://github.com/KURONAMI333/sky-world/releases/tag/v2.1.0).
+
+For bugs and questions, comment on the [CurseForge page](https://www.curseforge.com/minecraft/mc-mods/sky-world) or DM [@kuronami333 on X](https://x.com/kuronami333).
+
+[Source](https://github.com/KURONAMI333/sky-world) · [License](LICENSE)
